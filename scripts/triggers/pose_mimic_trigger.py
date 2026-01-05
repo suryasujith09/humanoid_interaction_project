@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Pose Mimic Trigger - Robot mimics human poses
+Save as: ~/humanoid_interaction_project/scripts/triggers/pose_mimic_trigger.py
+
+Watches human and triggers matching robot actions
+"""
 
 import cv2
 import time
@@ -8,7 +16,6 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.action_matcher import ActionMatcher
-
 
 
 class PoseMimicTrigger:
@@ -69,7 +76,6 @@ class PoseMimicTrigger:
             return True
         
         return False
-
     
     def _process_matched_action(self, action_name, confidence):
         """Process matched action with stability check"""
@@ -114,11 +120,10 @@ class PoseMimicTrigger:
         try:
             self.action_callback(action_name)
             if self.logger:
-                self.logger.info(f"?? MIMICKING: {action_name} (confidence: {confidence:.2f})")
+                self.logger.info(f"🤖 MIMICKING: {action_name} (confidence: {confidence:.2f})")
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error triggering action: {e}")
-
     
     def _camera_loop(self):
         """Main camera processing loop"""
@@ -195,7 +200,6 @@ class PoseMimicTrigger:
         
         if self.logger:
             self.logger.info("Camera loop stopped")
-
     
     def _add_ui_overlay(self, frame, matched_action, confidence, fps):
         """Add UI elements to frame"""
@@ -207,7 +211,7 @@ class PoseMimicTrigger:
         cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
         
         # Status
-        status_text = "Active" if self.enabled else "Paused"
+        status_text = "🟢 ACTIVE" if self.enabled else "🔴 PAUSED"
         status_color = (0, 255, 0) if self.enabled else (0, 0, 255)
         cv2.putText(frame, status_text, (10, 30),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, status_color, 2)
@@ -223,7 +227,7 @@ class PoseMimicTrigger:
             
             # Stability indicator
             stability = min(self.action_frame_count / self.min_stable_frames, 1.0)
-            stability_text = f"Stability: {"+"*int(stability * 10)}{' '*(10-int(stability * 10))} {int(stability * 100)}%"
+            stability_text = f"Stability: {'█' * int(stability * 10)}{' ' * (10 - int(stability * 10))} {int(stability * 100)}%"
             
             cv2.putText(frame, action_text, (10, 90),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
@@ -291,6 +295,9 @@ class PoseMimicTrigger:
         self.min_confidence = confidence
         if self.logger:
             self.logger.info(f"Min confidence set to {confidence}")
+
+
+# Test function
 if __name__ == "__main__":
     sys.path.append(os.path.expanduser('~/humanoid_interaction_project/scripts'))
     from utils.logger import get_logger
@@ -298,7 +305,7 @@ if __name__ == "__main__":
     logger = get_logger("PoseMimicTest")
     
     def test_callback(action_name):
-        print(f"ROBOT WOULD PERFORM: {action_name}")
+        print(f"🤖 ROBOT WOULD PERFORM: {action_name}")
         logger.info(f"Action triggered: {action_name}")
     
     trigger = PoseMimicTrigger(
@@ -308,14 +315,14 @@ if __name__ == "__main__":
     )
     
     print("="*60)
-    print("POSE MIMIC SYSTEM TEST")
+    print("🤖 POSE MIMIC SYSTEM TEST")
     print("="*60)
     print("\nStand in front of the camera and perform these poses:")
-    print("Wave - Raise right hand and move")
-    print("Greet - Raise both hands")
-    print("Hands Up - Both hands straight up")
-    print("T-Pose - Arms extended to sides")
-    print("Stand - Neutral standing pose")
+    print("  • Wave - Raise right hand and move")
+    print("  • Greet - Raise both hands")
+    print("  • Hands Up - Both hands straight up")
+    print("  • T-Pose - Arms extended to sides")
+    print("  • Stand - Neutral standing pose")
     print("\nHold each pose for 1-2 seconds")
     print("Press SPACE to pause/resume, Q to quit")
     print("="*60)
