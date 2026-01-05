@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Advanced Action Matcher - Matches human poses to robot actions
+Save as: ~/humanoid_interaction_project/scripts/utils/action_matcher.py
+
+Watches human movement and finds nearest matching robot action
+"""
+
 import numpy as np
 import mediapipe as mp
 from collections import deque
@@ -327,6 +336,8 @@ class ActionMatcher:
         """Release resources"""
         self.pose.close()
 
+
+# Test function
 if __name__ == "__main__":
     import cv2
     import sys
@@ -337,12 +348,13 @@ if __name__ == "__main__":
     
     logger = get_logger("ActionMatcherTest")
     matcher = ActionMatcher(logger=logger)
+    
     print("="*60)
-    print("? ACTION MATCHER TEST")
+    print("🎯 ACTION MATCHER TEST")
     print("="*60)
     print("\nTry these poses:")
     for action, sig in matcher.action_signatures.items():
-	print(f"{action}: {sig['description']}")
+        print(f"  • {action}: {sig['description']}")
     print("\nPress 'q' to quit")
     print("="*60)
     
@@ -361,7 +373,7 @@ if __name__ == "__main__":
             text = f"MATCH: {matched_action} ({confidence:.2f})"
             cv2.putText(annotated_frame, text, (10, 30),
                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-            print(f"? Matched: {matched_action} - confidence: {confidence:.2f}")
+            print(f"✓ Matched: {matched_action} - confidence: {confidence:.2f}")
         
         cv2.imshow('Action Matcher Test', annotated_frame)
         
