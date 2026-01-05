@@ -1,0 +1,38 @@
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:74] - Log file created: /home/ubuntu/humanoid_interaction_project/logs/HumanoidInteraction_20260105_065038.log
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ============================================================
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Humanoid Interaction System Starting...
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ============================================================
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ROS node initialized
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Board initialized on /dev/ttyAMA0
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ActionController initialized
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Action controller initialized
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Available actions: 0, back, back_step, calib, clamp_left, clamp_right, climb_stairs, crawl_left, crawl_right, descend_stairs, forward, forward_one_step, forward_step, go_forward_low, go_turn_left, go_turn_left_20, go_turn_left_low, go_turn_right, go_turn_right_20, go_turn_right_low, greet, hand_back, hand_open, hurdles, left_hand_put_block, left_shot, lie_to_stand, move_left, move_right, move_up, place_block, put_down, raise_right_hand, recline_to_stand, right_hand_put_block, right_shot, stair_down, stair_up, stand, stand_low, temp, turn_left, turn_left_30, turn_right, turn_right_30, twist, walk_ready, wave
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Subscribed to face detection: /face_detect/faces
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Face detection trigger initialized
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Subscribed to trigger topic: /humanoid/trigger_action
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Send action commands with: rostopic pub /humanoid/trigger_action std_msgs/String "data: 'wave'"
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ROS topic trigger initialized
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ============================================================
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - System Ready!
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - ============================================================
+2026-01-05 06:50:38 - HumanoidInteraction - INFO - [logger.py:83] - Starting main loop...
+2026-01-05 06:51:11 - HumanoidInteraction - INFO - [logger.py:110] - Trigger detected: ros_topic - Data: {'action': 'wave'}
+2026-01-05 06:51:11 - HumanoidInteraction - INFO - [logger.py:83] - Executing action: wave
+2026-01-05 06:51:11 - HumanoidInteraction - INFO - [logger.py:99] - Action 'wave' - starting
+2026-01-05 06:51:11 - HumanoidInteraction - INFO - [logger.py:83] - Action 'wave' started successfully
+2026-01-05 06:51:11 - HumanoidInteraction - INFO - [logger.py:83] - Triggered action 'wave' from ROS topic
+2026-01-05 06:51:15 - HumanoidInteraction - INFO - [logger.py:99] - Action 'wave' - completed
+2026-01-05 06:51:27 - HumanoidInteraction - INFO - [logger.py:110] - Trigger detected: ros_topic - Data: {'action': 'greet'}
+2026-01-05 06:51:27 - HumanoidInteraction - INFO - [logger.py:83] - Executing action: greet
+2026-01-05 06:51:27 - HumanoidInteraction - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 06:51:27 - HumanoidInteraction - INFO - [logger.py:83] - Action 'greet' started successfully
+2026-01-05 06:51:27 - HumanoidInteraction - INFO - [logger.py:83] - Triggered action 'greet' from ROS topic
+2026-01-05 06:51:31 - HumanoidInteraction - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - Signal 2 received, shutting down...
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - Shutting down humanoid interaction system...
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - Action stop requested
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - Action stop requested
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - ActionController cleanup complete
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - Face detection trigger disabled
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - ROS topic trigger disabled
+2026-01-05 06:52:19 - HumanoidInteraction - INFO - [logger.py:83] - Shutdown complete

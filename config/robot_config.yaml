@@ -1,0 +1,68 @@
+# AiNex Humanoid Robot Configuration
+
+robot:
+  name: "AiNex Humanoid"
+  version: "2.0"
+  total_servos: 22
+
+serial:
+  port: "/dev/ttyAMA0"
+  baudrate: 1000000
+  timeout: 5
+
+servo_mapping:
+  head_yaw: 1
+  head_pitch: 2
+  right_shoulder_pitch: 3
+  right_shoulder_roll: 4
+  right_elbow: 5
+  right_wrist: 6
+  left_shoulder_pitch: 7
+  left_shoulder_roll: 8
+  left_elbow: 9
+  left_wrist: 10
+
+default_positions:
+  head_yaw: 500
+  head_pitch: 500
+  right_shoulder_pitch: 500
+  right_shoulder_roll: 500
+  right_elbow: 500
+
+paths:
+  action_groups: "/home/ubuntu/software/ainex_controller/ActionGroups"
+  custom_actions: "/home/ubuntu/humanoid_interaction_project/actions/custom"
+  ros_controller: "/home/ubuntu/software/ainex_controller"
+
+actions:
+  wave:
+    file: "wave.d6a"
+    description: "Wave hand gesture"
+    duration: 3.0
+  greet:
+    file: "greet.d6a"
+    description: "Greeting gesture"
+    duration: 2.5
+
+triggers:
+  face_detection:
+    enabled: true
+    topic: "/face_detect/faces"
+    cooldown: 5.0
+  ros_topic:
+    enabled: true
+    topic: "/humanoid/trigger_action"
+
+ros:
+  namespace: "/humanoid_interaction"
+  rate: 30
+
+logging:
+  level: "INFO"
+  log_dir: "/home/ubuntu/humanoid_interaction_project/logs"
+  console_output: true
+  file_output: true
+
+safety:
+  emergency_stop_enabled: true
+  timeout_action: 10.0
