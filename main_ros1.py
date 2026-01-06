@@ -69,14 +69,13 @@ class RobotController:
             except:
                 pass
 
-    def _set_servo(self, servo_id, position, duration):
+    def _set_servo(self, servo_id, position):
         """
-        Correct AiNex SDK API
+        Correct API for YOUR AiNex SDK
         """
         self.board.bus_servo_set_position(
             int(servo_id),
-            int(position),
-            int(duration)
+            int(position)
         )
 
     def play_action(self, action_name):
@@ -116,8 +115,9 @@ class RobotController:
                     sid = i + 1
                     if sid > MAX_SERVOS:
                         break
-                    self._set_servo(sid, pos, duration)
+                    self._set_servo(sid, pos)
 
+                # Timing handled here (VERY IMPORTANT)
                 time.sleep(duration / 1000.0)
 
         except Exception as e:
