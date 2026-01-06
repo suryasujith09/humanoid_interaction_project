@@ -5,7 +5,6 @@ import os
 import sys
 import time
 import cv2
-import sqlite3
 import threading
 import argparse
 import signal
@@ -45,7 +44,7 @@ POSE_TO_ACTION = {
 }
 
 # ─────────────────────────────────────────────
-# ROBOT CONTROLLER
+# ROBOT CONTROLLER (CORRECT WAY)
 # ─────────────────────────────────────────────
 class RobotController:
     def __init__(self):
@@ -69,15 +68,13 @@ class RobotController:
             except:
                 pass
 
-    def _set_servo(self, servo_id, position):
-        self.board.bus_servo_set_position(int(servo_id), int(position))
-
     def play_action(self, action_name):
         if not self.lock.acquire(False):
             return
 
         try:
             filename = action_name + ".d6a"
+
             path = Path(CUSTOM_ACTIONS_DIR) / filename
             if not path.exists():
                 path = Path(SYSTEM_ACTIONS_DIR) / filename
@@ -87,45 +84,12 @@ class RobotController:
 
             rospy.loginfo(f"🎬 Playing action: {action_name}")
 
-            conn = sqlite3.connect(str(path))
-            cur = conn.cursor()
+            # 🔥 CORRECT: use servo queue
+            self.board.bus_servo_stop()
 
-            cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables = [t[0] for t in cur.fetchall()]
-            table = "ActionGroup" if "ActionGroup" in tables else "frames"
-
-            rows = cur.execute(
-                f"SELECT * FROM {table} ORDER BY [Index]"
-            ).fetchall()
-
-            conn.close()
-
-            for row in rows:
-                # ─────────────────────────────
-                # CASE 1: [Index, Time, ServoID, Position]
-                # ─────────────────────────────
-                if len(row) == 4:
-                    _, duration, servo_id, position = row
-                    self._set_servo(servo_id, position)
-                    time.sleep(duration / 1000.0)
-
-                # ─────────────────────────────
-                # CASE 2: [Index, Time, S1, S2, S3, ...]
-                # ─────────────────────────────
-                elif len(row) > 4:
-                    duration = row[1]
-                    servo_positions = row[2:]
-
-                    for i, pos in enumerate(servo_positions):
-                        sid = i + 1
-                        if sid > MAX_SERVOS:
-                            break
-                        self._set_servo(sid, pos)
-
-                    time.sleep(duration / 1000.0)
-
-                else:
-                    rospy.logwarn("⚠️ Unknown frame format, skipping")
+            # AiNex SDK automatically parses .d6a internally
+            self.board.bus_servo_queue(str(path))
+            self.board.bus_servo_queue_execute()
 
         except Exception as e:
             rospy.logerr(f"❌ Action error: {e}")
