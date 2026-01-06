@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 import time
 import cv2
+import sqlite3
 import threading
 import argparse
 import signal
+from pathlib import Path
 
 import rospy
 from std_msgs.msg import String
-
 import mediapipe as mp
-from pathlib import Path
 
 # ─────────────────────────────────────────────
 # SDK PATHS
@@ -21,20 +20,13 @@ from pathlib import Path
 sys.path.insert(0, '/home/ubuntu/software/ainex_controller')
 sys.path.insert(0, '/home/ubuntu/ros_ws/src/ainex_driver/ainex_sdk/src')
 
-try:
-    from ainex_sdk import Board
-except ImportError:
-    print("❌ AiNex SDK not found. Run on robot.")
-    sys.exit(1)
+from ainex_sdk import Board
 
 # ─────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────
-CUSTOM_ACTIONS_DIR = "/home/ubuntu/humanoid_interaction_project/actions/custom"
-SYSTEM_ACTIONS_DIR = "/home/ubuntu/software/ainex_controller/ActionGroups"
-
-COOLDOWN_TIME = 2.5
-MAX_SERVOS = 22
+CUSTOM_ACTIONS = "/home/ubuntu/humanoid_interaction_project/actions/custom"
+SYSTEM_ACTIONS = "/home/ubuntu/software/ainex_controller/ActionGroups"
 
 POSE_TO_ACTION = {
     "hands_up": "hands_up",
@@ -43,8 +35,10 @@ POSE_TO_ACTION = {
     "stand": "stand"
 }
 
+COOLDOWN = 2.5
+
 # ─────────────────────────────────────────────
-# ROBOT CONTROLLER (CORRECT WAY)
+# ROBOT CONTROLLER (FINAL)
 # ─────────────────────────────────────────────
 class RobotController:
     def __init__(self):
@@ -56,15 +50,15 @@ class RobotController:
                 self.board = Board()
             rospy.loginfo("✅ Robot connected")
         except Exception as e:
-            rospy.logerr(f"❌ Robot connection failed: {e}")
+            rospy.logerr(f"Robot init failed: {e}")
             sys.exit(1)
 
         self.lock = threading.Lock()
 
-        # Enable torque
-        for sid in range(1, MAX_SERVOS + 1):
+        # Enable torque safely
+        for i in range(1, 23):
             try:
-                self.board.bus_servo_enable_torque(sid, 1)
+                self.board.bus_servo_enable_torque(i, 1)
             except:
                 pass
 
@@ -75,21 +69,39 @@ class RobotController:
         try:
             filename = action_name + ".d6a"
 
-            path = Path(CUSTOM_ACTIONS_DIR) / filename
+            path = Path(CUSTOM_ACTIONS) / filename
             if not path.exists():
-                path = Path(SYSTEM_ACTIONS_DIR) / filename
+                path = Path(SYSTEM_ACTIONS) / filename
                 if not path.exists():
-                    rospy.logwarn(f"⚠️ Action not found: {filename}")
+                    rospy.logwarn(f"Action not found: {filename}")
                     return
 
             rospy.loginfo(f"🎬 Playing action: {action_name}")
 
-            # 🔥 CORRECT: use servo queue
-            self.board.bus_servo_stop()
+            conn = sqlite3.connect(str(path))
+            cur = conn.cursor()
 
-            # AiNex SDK automatically parses .d6a internally
-            self.board.bus_servo_queue(str(path))
-            self.board.bus_servo_queue_execute()
+            # THIS TABLE IS SERVO-BY-SERVO (confirmed)
+            rows = cur.execute(
+                "SELECT * FROM frames ORDER BY [Index]"
+            ).fetchall()
+
+            conn.close()
+
+            for row in rows:
+                # Expected format:
+                # [Index, Time(ms), ServoID, Position]
+                if len(row) != 4:
+                    continue
+
+                _, duration, servo_id, position = row
+
+                self.board.bus_servo_set_position(
+                    int(servo_id),
+                    int(position)
+                )
+
+                time.sleep(duration / 1000.0)
 
         except Exception as e:
             rospy.logerr(f"❌ Action error: {e}")
@@ -111,7 +123,7 @@ class VisionSystem:
             min_detection_confidence=0.6,
             min_tracking_confidence=0.6
         )
-        self.drawer = mp.solutions.drawing_utils
+        self.draw = mp.solutions.drawing_utils
 
     def detect_pose(self, lm):
         if lm[15].y < lm[0].y and lm[16].y < lm[0].y:
@@ -131,9 +143,9 @@ class VisionSystem:
         return None
 
     def run(self):
-        cap = cv2.VideoCapture(int(self.camera)) if self.camera.isdigit() else cv2.VideoCapture(self.camera)
+        cap = cv2.VideoCapture(int(self.camera))
         if not cap.isOpened():
-            rospy.logerr("❌ Camera failed")
+            rospy.logerr("Camera failed")
             return
 
         rospy.loginfo("📷 Vision started")
@@ -148,16 +160,19 @@ class VisionSystem:
             res = self.pose.process(rgb)
 
             if res.pose_landmarks:
-                self.drawer.draw_landmarks(frame, res.pose_landmarks, self.mp_pose.POSE_CONNECTIONS)
-                pose = self.detect_pose(res.pose_landmarks.landmark)
+                self.draw.draw_landmarks(
+                    frame,
+                    res.pose_landmarks,
+                    self.mp_pose.POSE_CONNECTIONS
+                )
 
+                pose = self.detect_pose(res.pose_landmarks.landmark)
                 if pose:
                     now = time.time()
-                    if now - self.last.get(pose, 0) > COOLDOWN_TIME:
-                        action = POSE_TO_ACTION[pose]
+                    if now - self.last.get(pose, 0) > COOLDOWN:
                         threading.Thread(
                             target=self.robot.play_action,
-                            args=(action,),
+                            args=(POSE_TO_ACTION[pose],),
                             daemon=True
                         ).start()
                         self.last[pose] = now
@@ -172,7 +187,7 @@ class VisionSystem:
 # ─────────────────────────────────────────────
 # ROS CALLBACK
 # ─────────────────────────────────────────────
-def ros_action_cb(msg):
+def ros_cb(msg):
     threading.Thread(
         target=robot.play_action,
         args=(msg.data.strip(),),
@@ -192,12 +207,9 @@ def main():
     global robot
     robot = RobotController()
 
-    rospy.Subscriber("/humanoid/action", String, ros_action_cb)
+    rospy.Subscriber("/humanoid/action", String, ros_cb)
 
-    vision = VisionSystem(args.camera, robot)
-
-    signal.signal(signal.SIGINT, lambda s, f: rospy.signal_shutdown("exit"))
-    vision.run()
+    VisionSystem(args.camera, robot).run()
 
 if __name__ == "__main__":
     main()
