@@ -6,7 +6,6 @@ Watches human skeleton → Matches pose → Triggers robot action
 
 import cv2
 import mediapipe as mp
-import numpy as np
 import serial
 import sqlite3
 import time
@@ -16,11 +15,10 @@ from dataclasses import dataclass
 from typing import Callable
 
 # ===================== CONFIG =====================
-CAMERA_PATH = "/dev/usb_cam"   # ❗ NOT CHANGED (as requested)
+CAMERA_PATH = "/dev/usb_cam"        # ❗ KEPT AS REQUESTED
 SERIAL_PORT = "/dev/ttyAMA0"
 BAUD_RATE = 1000000
 ACTIONS_DIR = "/home/ubuntu/humanoid_interaction_project/actions"
-CONFIDENCE_THRESHOLD = 0.75
 COOLDOWN_TIME = 2.0  # seconds
 
 print("=" * 60)
@@ -47,16 +45,20 @@ class PoseSignature:
     check_func: Callable
 
 def check_hands_up(lm):
-    left_up = lm[15].y < lm[0].y - 0.1
-    right_up = lm[16].y < lm[0].y - 0.1
-    close = abs(lm[15].x - lm[16].x) < 0.4
-    return left_up and right_up and close
+    return (
+        lm[15].y < lm[0].y - 0.1 and
+        lm[16].y < lm[0].y - 0.1 and
+        abs(lm[15].x - lm[16].x) < 0.4
+    )
 
 def check_hands_straight(lm):
     shoulder_y = (lm[11].y + lm[12].y) / 2
-    left = abs(lm[15].y - shoulder_y) < 0.15 and lm[15].x < lm[11].x - 0.2
-    right = abs(lm[16].y - shoulder_y) < 0.15 and lm[16].x > lm[12].x + 0.2
-    return left and right
+    return (
+        abs(lm[15].y - shoulder_y) < 0.15 and
+        abs(lm[16].y - shoulder_y) < 0.15 and
+        lm[15].x < lm[11].x - 0.2 and
+        lm[16].x > lm[12].x + 0.2
+    )
 
 def check_wave(lm):
     return lm[16].y < lm[12].y - 0.2 and lm[16].x > lm[0].x
@@ -67,9 +69,12 @@ def check_hands_down(lm):
 
 def check_place_block(lm):
     shoulder_y = (lm[11].y + lm[12].y) / 2
-    chest = abs(lm[15].y - shoulder_y) < 0.2 and abs(lm[16].y - shoulder_y) < 0.2
-    forward = lm[15].z < -0.1 and lm[16].z < -0.1
-    return chest and forward
+    return (
+        abs(lm[15].y - shoulder_y) < 0.2 and
+        abs(lm[16].y - shoulder_y) < 0.2 and
+        lm[15].z < -0.1 and
+        lm[16].z < -0.1
+    )
 
 POSES = [
     PoseSignature("HANDS UP", "hands_up.d6a", check_hands_up),
@@ -99,8 +104,8 @@ class RobotController:
     def play_action(self, action_file, pose_name):
         print("\n" + "=" * 50)
         print(f"🎬 ACTION: {pose_name}")
-        path = Path(ACTIONS_DIR) / action_file
 
+        path = Path(ACTIONS_DIR) / action_file
         if not path.exists():
             print(f"❌ Missing file: {path}")
             return
@@ -112,18 +117,35 @@ class RobotController:
 
         conn = sqlite3.connect(str(path))
         cur = conn.cursor()
-        frames = cur.execute(
-            "SELECT * FROM frames ORDER BY frame_num"
-        ).fetchall()
+
+        # 🔍 Detect correct table name automatically
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = [t[0] for t in cur.fetchall()]
+
+        if "frames" in tables:
+            table = "frames"
+            start_idx = 1
+        elif "ActionGroup" in tables:
+            table = "ActionGroup"
+            start_idx = 2
+        else:
+            print(f"❌ Unsupported .d6a format. Tables: {tables}")
+            conn.close()
+            return
+
+        frames = cur.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
         conn.close()
 
-        print(f"📊 Frames: {len(frames)}")
-        for i, frame in enumerate(frames):
-            positions = frame[1:25]
+        print(f"📊 Executing {len(frames)} frames")
+
+        for frame in frames:
+            positions = frame[start_idx:start_idx + 24]
+
             cmd = "#000P{:04d}".format(positions[0])
             for p in positions[1:]:
                 cmd += "P{:04d}".format(p)
             cmd += "T0100\r\n"
+
             self.serial.write(cmd.encode())
             time.sleep(0.02)
 
@@ -138,7 +160,7 @@ if not cap.isOpened():
 last_trigger = {}
 
 print("\n🎥 Camera started")
-print("⎋ Press ESC to exit\n")
+print("⎋ Press ESC to exit")
 
 # ===================== MAIN LOOP =====================
 while True:
@@ -169,7 +191,7 @@ while True:
 
     cv2.imshow("Humanoid Mimic System", frame)
 
-    if cv2.waitKey(1) & 0xFF == 27:
+    if cv2.waitKey(1) & 0xFF == 27:  # ESC
         break
 
 cap.release()
