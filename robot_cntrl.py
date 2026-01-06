@@ -205,37 +205,54 @@ class AinexD6AController:
                 fg='#f39c12'
             )
             
-            # Execute the .d6a file using ROS
-            # Adjust this command based on how your Ainex robot processes .d6a files
-            # Common options:
-            # 1. If it's a ROS bag file: rosbag play file_path
-            # 2. If it's a custom executable: python file_path or ./file_path
-            # 3. If it needs a specific ROS node: rosrun package_name node_name file_path
+            # .d6a files appear to be binary/custom format files for Ainex robot
+            # They need to be processed with Latin-1 or binary encoding
+            # Execute using the Ainex robot's interpreter/processor
             
-            # Example command - modify based on your robot's requirements:
-            cmd = ['python3', file_path]  # or ['rosbag', 'play', file_path]
+            # Try different execution methods:
+            # Method 1: Using Python with Latin-1 encoding
+            cmd = ['python3', '-c', f"exec(open('{file_path}', encoding='latin-1').read())"]
+            
+            # Method 2: If there's a specific Ainex processor (uncomment if needed):
+            # cmd = ['ainex_processor', file_path]
+            
+            # Method 3: If it's a ROS action file (uncomment if needed):
+            # cmd = ['rosrun', 'ainex_robot', 'action_player', file_path]
             
             self.running_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                cwd=self.d6a_directory
             )
             
-            stdout, stderr = self.running_process.communicate()
+            stdout, stderr = self.running_process.communicate(timeout=60)
             
             if self.running_process.returncode == 0:
                 self.status_label.config(
                     text=f"Successfully executed: {filename}",
                     fg='#2ecc71'
                 )
+                if stdout:
+                    print(f"Output: {stdout.decode('utf-8', errors='ignore')}")
             else:
                 self.status_label.config(
                     text=f"Execution failed: {filename}",
                     fg='#e74c3c'
                 )
                 if stderr:
-                    messagebox.showerror("Error", stderr.decode())
+                    error_msg = stderr.decode('utf-8', errors='ignore')
+                    print(f"Error: {error_msg}")
+                    messagebox.showerror("Error", error_msg[:500])
                     
+        except subprocess.TimeoutExpired:
+            if self.running_process:
+                self.running_process.kill()
+            self.status_label.config(
+                text=f"Execution timeout: {filename}",
+                fg='#e74c3c'
+            )
+            messagebox.showwarning("Timeout", "Execution took too long and was stopped")
         except Exception as e:
             self.status_label.config(
                 text=f"Error: {str(e)}",
