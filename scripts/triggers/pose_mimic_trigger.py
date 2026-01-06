@@ -5,7 +5,7 @@ Pose Mimic Trigger - Robot mimics human poses
 Save as: ~/humanoid_interaction_project/scripts/triggers/pose_mimic_trigger.py
 
 Watches human and triggers matching robot actions.
-Includes fix for OpenCV GStreamer errors on Raspberry Pi.
+UPDATED: Supports both Integer IDs (0) and Device Paths (/dev/usb_cam).
 """
 
 import cv2
@@ -38,12 +38,19 @@ class PoseMimicTrigger:
             action_callback: Function to call with action name
             config_path: Path to config file
             logger: Logger instance
-            camera_id: Camera device ID (usually 0)
+            camera_id: Camera device ID (0) or Path (/dev/usb_cam)
         """
         self.action_callback = action_callback
         self.logger = logger
-        self.camera_id = camera_id
         
+        # --- SMART CAMERA ID HANDLING ---
+        # If it's a digit string ("0"), convert to int.
+        # If it's a path ("/dev/usb_cam"), keep as string.
+        if isinstance(camera_id, str) and camera_id.isdigit():
+            self.camera_id = int(camera_id)
+        else:
+            self.camera_id = camera_id
+
         # State management
         self.enabled = True
         self.running = False
@@ -70,8 +77,8 @@ class PoseMimicTrigger:
         
         if self.logger:
             self.logger.info("Pose mimic trigger initialized")
+            self.logger.info(f"Camera Source: {self.camera_id}")
             self.logger.info(f"Min confidence: {self.min_confidence}")
-            self.logger.info(f"Stable frames required: {self.min_stable_frames}")
     
     def _can_trigger(self, action_name):
         """Check if action can trigger (cooldown check)"""
@@ -135,73 +142,85 @@ class PoseMimicTrigger:
     def _camera_loop(self):
         """Main camera processing loop"""
         if self.logger:
-            self.logger.info(f"Starting camera on device {self.camera_id} (V4L2 Backend)")
+            self.logger.info(f"Starting camera on device {self.camera_id}")
         
-        # --- CRITICAL FIX: FORCE V4L2 BACKEND ---
-        # This prevents GStreamer errors on Raspberry Pi/Ubuntu
-        self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
-        
-        if not self.cap.isOpened():
-            if self.logger:
-                self.logger.error(f"Failed to open camera {self.camera_id}. Try checking connections or index.")
-            print(f"❌ Error: Could not open video device {self.camera_id}")
-            return
-        
-        # Set camera properties
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Lower res for faster FPS
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        self.cap.set(cv2.CAP_PROP_FPS, 30)
-        
-        if self.logger:
-            self.logger.info("Camera started successfully")
-        
-        fps_counter = 0
-        fps_start_time = time.time()
-        current_fps = 0
-        
-        while self.running:
-            success, frame = self.cap.read()
-            
-            if not success:
+        # --- CRITICAL FIX: HANDLE PATH vs INDEX ---
+        try:
+            if isinstance(self.camera_id, str):
+                # Path mode (/dev/usb_cam) - Do NOT use V4L2 flag usually
+                self.logger.info(f"Opening camera by path: {self.camera_id}")
+                self.cap = cv2.VideoCapture(self.camera_id)
+            else:
+                # Integer mode (0) - Force V4L2 to fix GStreamer bug
+                self.logger.info(f"Opening camera by index: {self.camera_id} (V4L2 Forced)")
+                self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
+
+            if not self.cap.isOpened():
                 if self.logger:
-                    self.logger.warning("Failed to read frame")
-                time.sleep(0.1)
-                continue
+                    self.logger.error(f"Failed to open camera {self.camera_id}. Check connection or path.")
+                print(f"❌ Error: Could not open video device {self.camera_id}")
+                return
             
-            # Flip for mirror view (more natural for mimicking)
-            frame = cv2.flip(frame, 1)
+            # Set camera properties
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Lower res for performance
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            self.cap.set(cv2.CAP_PROP_FPS, 30)
             
-            # Process pose and match action
-            matched_action, confidence, annotated_frame = self.matcher.process_frame(frame)
+            if self.logger:
+                self.logger.info("Camera started successfully")
             
-            # Process the matched action
-            self._process_matched_action(matched_action, confidence)
+            fps_counter = 0
+            fps_start_time = time.time()
+            current_fps = 0
             
-            # Calculate FPS
-            fps_counter += 1
-            if time.time() - fps_start_time >= 1.0:
-                current_fps = fps_counter
-                fps_counter = 0
-                fps_start_time = time.time()
-            
-            # Add UI overlays
-            self._add_ui_overlay(annotated_frame, matched_action, confidence, current_fps)
-            
-            # Display frame
-            if self.show_window:
-                cv2.imshow(self.window_name, annotated_frame)
+            while self.running:
+                success, frame = self.cap.read()
                 
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
+                if not success:
                     if self.logger:
-                        self.logger.info("User requested stop")
-                    self.stop()
-                    break
-                elif key == ord(' '):
-                    self.enabled = not self.enabled
-                    if self.logger:
-                        self.logger.info(f"Pose mimic {'ENABLED' if self.enabled else 'DISABLED'}")
-        
+                        self.logger.warning("Failed to read frame")
+                    time.sleep(0.1)
+                    continue
+                
+                # Flip for mirror view (more natural for mimicking)
+                frame = cv2.flip(frame, 1)
+                
+                # Process pose and match action
+                matched_action, confidence, annotated_frame = self.matcher.process_frame(frame)
+                
+                # Process the matched action
+                self._process_matched_action(matched_action, confidence)
+                
+                # Calculate FPS
+                fps_counter += 1
+                if time.time() - fps_start_time >= 1.0:
+                    current_fps = fps_counter
+                    fps_counter = 0
+                    fps_start_time = time.time()
+                
+                # Add UI overlays
+                self._add_ui_overlay(annotated_frame, matched_action, confidence, current_fps)
+                
+                # Display frame
+                if self.show_window:
+                    cv2.imshow(self.window_name, annotated_frame)
+                    
+                    key = cv2.waitKey(1) & 0xFF
+                    if key == ord('q'):
+                        if self.logger:
+                            self.logger.info("User requested stop")
+                        self.stop()
+                        break
+                    elif key == ord(' '):
+                        self.enabled = not self.enabled
+                        if self.logger:
+                            self.logger.info(f"Pose mimic {'ENABLED' if self.enabled else 'DISABLED'}")
+                            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Critical Camera Error: {e}")
+            print(f"Critical Camera Error: {e}")
+            
         # Cleanup
         if self.cap:
             self.cap.release()
@@ -309,50 +328,3 @@ class PoseMimicTrigger:
         self.min_confidence = confidence
         if self.logger:
             self.logger.info(f"Min confidence set to {confidence}")
-
-
-# Test function
-if __name__ == "__main__":
-    # Ensure correct paths for testing
-    sys.path.append(os.path.expanduser('~/humanoid_interaction_project/scripts'))
-    try:
-        from utils.logger import get_logger
-    except ImportError:
-        # Simple fallback logger if running standalone
-        class SimpleLogger:
-            def info(self, msg): print(f"[INFO] {msg}")
-            def warning(self, msg): print(f"[WARN] {msg}")
-            def error(self, msg): print(f"[ERROR] {msg}")
-            def trigger(self, t, d): print(f"[TRIGGER] {t} - {d}")
-        
-        def get_logger(name): return SimpleLogger()
-    
-    logger = get_logger("PoseMimicTest")
-    
-    def test_callback(action_name):
-        print(f"\n✨ ROBOT TRIGGERED: {action_name} ✨")
-        logger.info(f"Action triggered: {action_name}")
-    
-    # Initialize with Camera 0 (Change to 1 or -1 if needed)
-    trigger = PoseMimicTrigger(
-        action_callback=test_callback,
-        logger=logger,
-        camera_id=0
-    )
-    
-    print("="*60)
-    print("🤖 POSE MIMIC SYSTEM TEST (V4L2 MODE)")
-    print("="*60)
-    print("\nStand in front of the camera and perform these poses:")
-    print("  • Wave - Raise right hand and move")
-    print("  • Hands Up - Both hands straight up")
-    print("  • T-Pose - Arms extended to sides")
-    print("\nHold each pose for 1-2 seconds")
-    print("Press SPACE to pause/resume, Q to quit")
-    print("="*60)
-    
-    # Run loop
-    try:
-        trigger.start(blocking=True)
-    except KeyboardInterrupt:
-        trigger.stop()
