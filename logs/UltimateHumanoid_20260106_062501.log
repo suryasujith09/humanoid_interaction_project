@@ -1,0 +1,50 @@
+2026-01-06 06:25:01 - UltimateHumanoid - INFO - [logger.py:74] - Log file created: /home/ubuntu/humanoid_interaction_project/logs/UltimateHumanoid_20260106_062501.log
+2026-01-06 06:25:01 - UltimateHumanoid - INFO - [logger.py:83] - System initializing...
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ ROS node initialized
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Initializing action controller...
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Board initialized on /dev/ttyAMA0
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ActionController initialized
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action controller ready
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Found 52 available actions
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ All critical actions available
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Available actions:
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   1. 0
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   2. back
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   3. back_step
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   4. calib
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   5. clamp_left
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   6. clamp_right
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   7. climb_stairs
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   8. crawl_left
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   9. crawl_right
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   10. custom/go_right
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   11. custom/hands_sides
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   12. custom/hands_straight
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   13. custom/hands_up
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   14. descend_stairs
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   15. forward
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] -   ... and 37 more
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Initializing triggers (mode: mimic)...
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Action matcher initialized
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Pose mimic trigger initialized
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Min confidence: 0.7
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Stable frames required: 8
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Pose mimic trigger initialized
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Subscribed to trigger topic: /humanoid/trigger_action
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Send action commands with: rostopic pub /humanoid/trigger_action std_msgs/String "data: 'wave'"
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ ROS topic trigger initialized
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Starting main loop...
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Starting camera on device -1
+2026-01-06 06:25:02 - UltimateHumanoid - INFO - [logger.py:83] - Pose mimic started in background
+2026-01-06 06:25:02 - UltimateHumanoid - ERROR - [logger.py:91] - Failed to open camera -1
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - Signal 2 received, shutting down...
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - ======================================================================
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - Shutting down system...
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - Stopping pose mimic...
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - ✓ pose_mimic trigger stopped
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - Action stop requested
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - Action stop requested
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - ActionController cleanup complete
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action controller stopped
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - ======================================================================
+2026-01-06 06:25:27 - UltimateHumanoid - INFO - [logger.py:83] - ✅ Shutdown complete

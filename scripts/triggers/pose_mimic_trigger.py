@@ -54,7 +54,7 @@ class PoseMimicTrigger:
         self.matcher = ActionMatcher(logger=logger)
         
         # Camera
-        self.cap = None
+        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         self.camera_thread = None
         self.show_window = True
         

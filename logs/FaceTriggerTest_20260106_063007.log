@@ -1,0 +1,4 @@
+2026-01-06 06:30:07 - FaceTriggerTest - INFO - [logger.py:74] - Log file created: /home/ubuntu/humanoid_interaction_project/logs/FaceTriggerTest_20260106_063007.log
+2026-01-06 06:30:07 - FaceTriggerTest - INFO - [logger.py:83] - Subscribed to face detection: /face_detect/faces
+2026-01-06 06:30:07 - FaceTriggerTest - INFO - [logger.py:83] - Face detection trigger test running...
+2026-01-06 06:30:07 - FaceTriggerTest - INFO - [logger.py:83] - Show your face to the camera to test!

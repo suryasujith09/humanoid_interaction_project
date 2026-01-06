@@ -1,0 +1,7 @@
+2026-01-06 06:31:21 - PoseMimicTest - INFO - [logger.py:74] - Log file created: /home/ubuntu/humanoid_interaction_project/logs/PoseMimicTest_20260106_063121.log
+2026-01-06 06:31:21 - PoseMimicTest - INFO - [logger.py:83] - Action matcher initialized
+2026-01-06 06:31:21 - PoseMimicTest - INFO - [logger.py:83] - Pose mimic trigger initialized
+2026-01-06 06:31:21 - PoseMimicTest - INFO - [logger.py:83] - Min confidence: 0.7
+2026-01-06 06:31:21 - PoseMimicTest - INFO - [logger.py:83] - Stable frames required: 8
+2026-01-06 06:31:21 - PoseMimicTest - INFO - [logger.py:83] - Starting camera on device 0
+2026-01-06 06:31:21 - PoseMimicTest - ERROR - [logger.py:91] - Failed to open camera 0
