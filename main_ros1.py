@@ -7,7 +7,6 @@ import cv2
 import sqlite3
 import threading
 import argparse
-import signal
 from pathlib import Path
 
 import rospy
@@ -35,10 +34,11 @@ POSE_TO_ACTION = {
     "stand": "stand"
 }
 
+MAX_SERVOS = 21
 COOLDOWN = 2.5
 
 # ─────────────────────────────────────────────
-# ROBOT CONTROLLER (FINAL)
+# ROBOT CONTROLLER (FINAL & CORRECT)
 # ─────────────────────────────────────────────
 class RobotController:
     def __init__(self):
@@ -56,9 +56,9 @@ class RobotController:
         self.lock = threading.Lock()
 
         # Enable torque safely
-        for i in range(1, 23):
+        for sid in range(1, MAX_SERVOS + 1):
             try:
-                self.board.bus_servo_enable_torque(i, 1)
+                self.board.bus_servo_enable_torque(sid, 1)
             except:
                 pass
 
@@ -81,25 +81,25 @@ class RobotController:
             conn = sqlite3.connect(str(path))
             cur = conn.cursor()
 
-            # THIS TABLE IS SERVO-BY-SERVO (confirmed)
             rows = cur.execute(
-                "SELECT * FROM frames ORDER BY [Index]"
+                "SELECT * FROM ActionGroup ORDER BY [Index]"
             ).fetchall()
 
             conn.close()
 
             for row in rows:
-                # Expected format:
-                # [Index, Time(ms), ServoID, Position]
-                if len(row) != 4:
-                    continue
+                # row = [Index, Time, Servo1, Servo2, ...]
+                duration = row[1]
+                servo_values = row[2:]
 
-                _, duration, servo_id, position = row
-
-                self.board.bus_servo_set_position(
-                    int(servo_id),
-                    int(position)
-                )
+                for i, pos in enumerate(servo_values):
+                    servo_id = i + 1
+                    if servo_id > MAX_SERVOS:
+                        break
+                    self.board.bus_servo_set_position(
+                        servo_id,
+                        int(pos)
+                    )
 
                 time.sleep(duration / 1000.0)
 
