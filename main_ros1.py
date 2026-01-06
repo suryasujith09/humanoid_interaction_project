@@ -17,7 +17,7 @@ import mediapipe as mp
 from pathlib import Path
 
 # ─────────────────────────────────────────────
-# SDK PATHS (DO NOT CHANGE)
+# SDK PATHS
 # ─────────────────────────────────────────────
 sys.path.insert(0, '/home/ubuntu/software/ainex_controller')
 sys.path.insert(0, '/home/ubuntu/ros_ws/src/ainex_driver/ainex_sdk/src')
@@ -62,7 +62,7 @@ class RobotController:
 
         self.lock = threading.Lock()
 
-        # Enable torque for all servos
+        # Enable torque
         for sid in range(1, MAX_SERVOS + 1):
             try:
                 self.board.bus_servo_enable_torque(sid, 1)
@@ -70,13 +70,7 @@ class RobotController:
                 pass
 
     def _set_servo(self, servo_id, position):
-        """
-        Correct API for YOUR AiNex SDK
-        """
-        self.board.bus_servo_set_position(
-            int(servo_id),
-            int(position)
-        )
+        self.board.bus_servo_set_position(int(servo_id), int(position))
 
     def play_action(self, action_name):
         if not self.lock.acquire(False):
@@ -85,11 +79,10 @@ class RobotController:
         try:
             filename = action_name + ".d6a"
             path = Path(CUSTOM_ACTIONS_DIR) / filename
-
             if not path.exists():
                 path = Path(SYSTEM_ACTIONS_DIR) / filename
                 if not path.exists():
-                    rospy.logwarn(f"⚠️ Action file not found: {filename}")
+                    rospy.logwarn(f"⚠️ Action not found: {filename}")
                     return
 
             rospy.loginfo(f"🎬 Playing action: {action_name}")
@@ -101,24 +94,38 @@ class RobotController:
             tables = [t[0] for t in cur.fetchall()]
             table = "ActionGroup" if "ActionGroup" in tables else "frames"
 
-            frames = cur.execute(
+            rows = cur.execute(
                 f"SELECT * FROM {table} ORDER BY [Index]"
             ).fetchall()
 
             conn.close()
 
-            for frame in frames:
-                duration = frame[1]
-                servo_positions = frame[2:]
+            for row in rows:
+                # ─────────────────────────────
+                # CASE 1: [Index, Time, ServoID, Position]
+                # ─────────────────────────────
+                if len(row) == 4:
+                    _, duration, servo_id, position = row
+                    self._set_servo(servo_id, position)
+                    time.sleep(duration / 1000.0)
 
-                for i, pos in enumerate(servo_positions):
-                    sid = i + 1
-                    if sid > MAX_SERVOS:
-                        break
-                    self._set_servo(sid, pos)
+                # ─────────────────────────────
+                # CASE 2: [Index, Time, S1, S2, S3, ...]
+                # ─────────────────────────────
+                elif len(row) > 4:
+                    duration = row[1]
+                    servo_positions = row[2:]
 
-                # Timing handled here (VERY IMPORTANT)
-                time.sleep(duration / 1000.0)
+                    for i, pos in enumerate(servo_positions):
+                        sid = i + 1
+                        if sid > MAX_SERVOS:
+                            break
+                        self._set_servo(sid, pos)
+
+                    time.sleep(duration / 1000.0)
+
+                else:
+                    rospy.logwarn("⚠️ Unknown frame format, skipping")
 
         except Exception as e:
             rospy.logerr(f"❌ Action error: {e}")
@@ -133,7 +140,7 @@ class VisionSystem:
     def __init__(self, camera, robot):
         self.camera = camera
         self.robot = robot
-        self.last_trigger = {}
+        self.last = {}
 
         self.mp_pose = mp.solutions.pose
         self.pose = self.mp_pose.Pose(
@@ -143,20 +150,16 @@ class VisionSystem:
         self.drawer = mp.solutions.drawing_utils
 
     def detect_pose(self, lm):
-        # Hands Up
         if lm[15].y < lm[0].y and lm[16].y < lm[0].y:
             return "hands_up"
 
-        # T-Pose
         sy = (lm[11].y + lm[12].y) / 2
         if abs(lm[15].y - sy) < 0.2 and abs(lm[16].y - sy) < 0.2:
             return "hands_straight"
 
-        # Wave
         if lm[16].y < lm[12].y - 0.2:
             return "wave"
 
-        # Stand
         hy = (lm[23].y + lm[24].y) / 2
         if lm[15].y > hy and lm[16].y > hy:
             return "stand"
@@ -164,17 +167,12 @@ class VisionSystem:
         return None
 
     def run(self):
-        cap = (
-            cv2.VideoCapture(int(self.camera))
-            if self.camera.isdigit()
-            else cv2.VideoCapture(self.camera)
-        )
-
+        cap = cv2.VideoCapture(int(self.camera)) if self.camera.isdigit() else cv2.VideoCapture(self.camera)
         if not cap.isOpened():
-            rospy.logerr("❌ Camera failed to open")
+            rospy.logerr("❌ Camera failed")
             return
 
-        rospy.loginfo("📷 Vision system started")
+        rospy.loginfo("📷 Vision started")
 
         while not rospy.is_shutdown():
             ret, frame = cap.read()
@@ -183,27 +181,22 @@ class VisionSystem:
 
             frame = cv2.flip(frame, 1)
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            result = self.pose.process(rgb)
+            res = self.pose.process(rgb)
 
-            if result.pose_landmarks:
-                self.drawer.draw_landmarks(
-                    frame,
-                    result.pose_landmarks,
-                    self.mp_pose.POSE_CONNECTIONS
-                )
-
-                pose = self.detect_pose(result.pose_landmarks.landmark)
+            if res.pose_landmarks:
+                self.drawer.draw_landmarks(frame, res.pose_landmarks, self.mp_pose.POSE_CONNECTIONS)
+                pose = self.detect_pose(res.pose_landmarks.landmark)
 
                 if pose:
                     now = time.time()
-                    if now - self.last_trigger.get(pose, 0) > COOLDOWN_TIME:
-                        action = POSE_TO_ACTION.get(pose)
+                    if now - self.last.get(pose, 0) > COOLDOWN_TIME:
+                        action = POSE_TO_ACTION[pose]
                         threading.Thread(
                             target=self.robot.play_action,
                             args=(action,),
                             daemon=True
                         ).start()
-                        self.last_trigger[pose] = now
+                        self.last[pose] = now
 
             cv2.imshow("Humanoid Mimic", frame)
             if cv2.waitKey(1) & 0xFF == 27:
@@ -215,12 +208,10 @@ class VisionSystem:
 # ─────────────────────────────────────────────
 # ROS CALLBACK
 # ─────────────────────────────────────────────
-def ros_action_callback(msg):
-    action = msg.data.strip()
-    rospy.loginfo(f"📡 ROS trigger: {action}")
+def ros_action_cb(msg):
     threading.Thread(
         target=robot.play_action,
-        args=(action,),
+        args=(msg.data.strip(),),
         daemon=True
     ).start()
 
@@ -229,7 +220,7 @@ def ros_action_callback(msg):
 # ─────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--camera", default="0", help="Camera ID or device path")
+    parser.add_argument("--camera", default="0")
     args = parser.parse_args()
 
     rospy.init_node("ultimate_humanoid_mimic", anonymous=False)
@@ -237,19 +228,11 @@ def main():
     global robot
     robot = RobotController()
 
-    rospy.Subscriber(
-        "/humanoid/action",
-        String,
-        ros_action_callback
-    )
+    rospy.Subscriber("/humanoid/action", String, ros_action_cb)
 
     vision = VisionSystem(args.camera, robot)
 
-    signal.signal(
-        signal.SIGINT,
-        lambda s, f: rospy.signal_shutdown("Shutdown")
-    )
-
+    signal.signal(signal.SIGINT, lambda s, f: rospy.signal_shutdown("exit"))
     vision.run()
 
 if __name__ == "__main__":
