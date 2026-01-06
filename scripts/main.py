@@ -173,9 +173,6 @@ def main():
     parser.add_argument('--mode', choices=['mimic', 'gesture'], default='mimic', help='Control mode')
     parser.add_argument('--no-ros', action='store_true', help='Disable ROS topic control')
     
-<<<<<<< HEAD
- =======
->>>>>>> e751d62a8035c81dc52996a3c135d97fea557c64
     
     args = parser.parse_args()
     
