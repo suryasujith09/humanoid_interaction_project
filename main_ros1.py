@@ -18,7 +18,6 @@ import mediapipe as mp
 # ─────────────────────────────────────────────
 sys.path.insert(0, '/home/ubuntu/software/ainex_controller')
 sys.path.insert(0, '/home/ubuntu/ros_ws/src/ainex_driver/ainex_sdk/src')
-
 from ainex_sdk import Board
 
 # ─────────────────────────────────────────────
@@ -38,7 +37,7 @@ MAX_SERVOS = 21
 COOLDOWN = 2.5
 
 # ─────────────────────────────────────────────
-# ROBOT CONTROLLER (FINAL & CORRECT)
+# ROBOT CONTROLLER (FINAL)
 # ─────────────────────────────────────────────
 class RobotController:
     def __init__(self):
@@ -55,7 +54,6 @@ class RobotController:
 
         self.lock = threading.Lock()
 
-        # Enable torque safely
         for sid in range(1, MAX_SERVOS + 1):
             try:
                 self.board.bus_servo_enable_torque(sid, 1)
@@ -68,7 +66,6 @@ class RobotController:
 
         try:
             filename = action_name + ".d6a"
-
             path = Path(CUSTOM_ACTIONS) / filename
             if not path.exists():
                 path = Path(SYSTEM_ACTIONS) / filename
@@ -79,27 +76,29 @@ class RobotController:
             rospy.loginfo(f"🎬 Playing action: {action_name}")
 
             conn = sqlite3.connect(str(path))
+            conn.row_factory = None  # FORCE tuples
             cur = conn.cursor()
 
-            rows = cur.execute(
-                "SELECT * FROM ActionGroup ORDER BY [Index]"
-            ).fetchall()
-
+            cur.execute("SELECT * FROM ActionGroup ORDER BY [Index]")
+            rows = cur.fetchall()
             conn.close()
 
             for row in rows:
-                # row = [Index, Time, Servo1, Servo2, ...]
-                duration = row[1]
-                servo_values = row[2:]
+                # HARD SAFETY CHECK
+                if not isinstance(row, tuple):
+                    continue
 
-                for i, pos in enumerate(servo_values):
-                    servo_id = i + 1
-                    if servo_id > MAX_SERVOS:
+                # ActionGroup schema:
+                # [Index, Time, Servo1, Servo2, ... Servo21]
+                duration = int(row[1])
+
+                for servo_id in range(1, MAX_SERVOS + 1):
+                    col_index = 1 + servo_id
+                    if col_index >= len(row):
                         break
-                    self.board.bus_servo_set_position(
-                        servo_id,
-                        int(pos)
-                    )
+
+                    pos = row[col_index]
+                    self.board.bus_servo_set_position(servo_id, int(pos))
 
                 time.sleep(duration / 1000.0)
 
@@ -161,9 +160,7 @@ class VisionSystem:
 
             if res.pose_landmarks:
                 self.draw.draw_landmarks(
-                    frame,
-                    res.pose_landmarks,
-                    self.mp_pose.POSE_CONNECTIONS
+                    frame, res.pose_landmarks, self.mp_pose.POSE_CONNECTIONS
                 )
 
                 pose = self.detect_pose(res.pose_landmarks.landmark)
