@@ -1,0 +1,49 @@
+2026-01-05 13:35:29 - UltimateHumanoid - INFO - [logger.py:74] - Log file created: /home/ubuntu/humanoid_interaction_project/logs/UltimateHumanoid_20260105_133529.log
+2026-01-05 13:35:29 - UltimateHumanoid - INFO - [logger.py:83] - System initializing...
+2026-01-05 13:38:18 - UltimateHumanoid - WARNING - [logger.py:87] - ROS initialization failed: Failed to initialize time. Please check logs for additional details
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   System will run without ROS
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Initializing action controller...
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Board initialized on /dev/ttyAMA0
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ActionController initialized
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action controller ready
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Found 48 available actions
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ✓ All critical actions available
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Available actions:
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   1. 0
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   2. back
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   3. back_step
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   4. calib
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   5. clamp_left
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   6. clamp_right
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   7. climb_stairs
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   8. crawl_left
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   9. crawl_right
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   10. descend_stairs
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   11. forward
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   12. forward_one_step
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   13. forward_step
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   14. go_forward_low
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   15. go_turn_left
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] -   ... and 33 more
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Initializing triggers (mode: gesture)...
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Gesture trigger initialized
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Gesture recognition trigger initialized
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Subscribed to trigger topic: /humanoid/trigger_action
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Send action commands with: rostopic pub /humanoid/trigger_action std_msgs/String "data: 'wave'"
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ✓ ROS topic trigger initialized
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Starting main loop...
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Starting camera on device 0
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Gesture trigger started in background
+2026-01-05 13:38:18 - UltimateHumanoid - ERROR - [logger.py:91] - Error in main loop: time is not initialized. Have you called init_node()?
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - ======================================================================
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Shutting down system...
+2026-01-05 13:38:18 - UltimateHumanoid - INFO - [logger.py:83] - Stopping gesture trigger...
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - Camera started successfully
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - Camera loop stopped
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - ✓ gesture trigger stopped
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - Action stop requested
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - Action stop requested
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - ActionController cleanup complete
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action controller stopped
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - ======================================================================
+2026-01-05 13:38:19 - UltimateHumanoid - INFO - [logger.py:83] - ✅ Shutdown complete

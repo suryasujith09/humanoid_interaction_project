@@ -1,0 +1,203 @@
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:74] - Log file created: /home/ubuntu/humanoid_interaction_project/logs/UltimateHumanoid_20260105_134515.log
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - System initializing...
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ ROS node initialized
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Initializing action controller...
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Board initialized on /dev/ttyAMA0
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ActionController initialized
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action controller ready
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Found 48 available actions
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ All critical actions available
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Available actions:
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   1. 0
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   2. back
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   3. back_step
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   4. calib
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   5. clamp_left
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   6. clamp_right
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   7. climb_stairs
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   8. crawl_left
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   9. crawl_right
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   10. descend_stairs
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   11. forward
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   12. forward_one_step
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   13. forward_step
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   14. go_forward_low
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   15. go_turn_left
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] -   ... and 33 more
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Initializing triggers (mode: gesture)...
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Gesture trigger initialized
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Gesture recognition trigger initialized
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Subscribed to trigger topic: /humanoid/trigger_action
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Send action commands with: rostopic pub /humanoid/trigger_action std_msgs/String "data: 'wave'"
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ ROS topic trigger initialized
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Starting main loop...
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Starting camera on device 0
+2026-01-05 13:45:15 - UltimateHumanoid - INFO - [logger.py:83] - Gesture trigger started in background
+2026-01-05 13:45:16 - UltimateHumanoid - INFO - [logger.py:83] - Camera started successfully
+2026-01-05 13:45:19 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:19 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:45:19 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:45:19 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:45:21 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.8, 'action': 'stand'}
+2026-01-05 13:45:22 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:45:23 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:23 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:45:23 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:45:23 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:45:23 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'peace_sign', 'confidence': 0.7, 'action': 'raise_right_hand'}
+2026-01-05 13:45:24 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:45:25 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'rock_sign', 'confidence': 0.7, 'action': 'wave'}
+2026-01-05 13:45:26 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:45:28 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'rock_sign', 'confidence': 0.7, 'action': 'wave'}
+2026-01-05 13:45:28 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: wave
+2026-01-05 13:45:28 - UltimateHumanoid - INFO - [logger.py:99] - Action 'wave' - starting
+2026-01-05 13:45:28 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action wave started
+2026-01-05 13:45:29 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:29 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.8, 'action': 'stand'}
+2026-01-05 13:45:29 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:30 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 't_pose', 'confidence': 0.9, 'action': 'hands_straight'}
+2026-01-05 13:45:30 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_straight
+2026-01-05 13:45:31 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'pointing', 'confidence': 0.7, 'action': 'forward_one_step'}
+2026-01-05 13:45:32 - UltimateHumanoid - INFO - [logger.py:99] - Action 'wave' - completed
+2026-01-05 13:45:32 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:45:32 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: stand
+2026-01-05 13:45:32 - UltimateHumanoid - INFO - [logger.py:99] - Action 'stand' - starting
+2026-01-05 13:45:32 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action stand started
+2026-01-05 13:45:33 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'rock_sign', 'confidence': 0.8, 'action': 'wave'}
+2026-01-05 13:45:33 - UltimateHumanoid - INFO - [logger.py:99] - Action 'stand' - completed
+2026-01-05 13:45:33 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:45:33 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:45:34 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:34 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:45:34 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:45:34 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:45:35 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.8, 'action': 'stand'}
+2026-01-05 13:45:35 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:37 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'peace_sign', 'confidence': 0.7, 'action': 'raise_right_hand'}
+2026-01-05 13:45:37 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:37 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:45:38 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:45:38 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:45:39 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:39 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:45:39 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:45:39 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:45:40 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:45:40 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:42 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:42 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'rock_sign', 'confidence': 0.7, 'action': 'wave'}
+2026-01-05 13:45:42 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:45:44 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:44 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:45:44 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:45:44 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:45:45 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.8, 'action': 'stand'}
+2026-01-05 13:45:47 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:48 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:45:50 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:50 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:45:50 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:45:50 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:45:51 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:53 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:45:54 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:45:54 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:45:54 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: stand
+2026-01-05 13:45:54 - UltimateHumanoid - INFO - [logger.py:99] - Action 'stand' - starting
+2026-01-05 13:45:54 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action stand started
+2026-01-05 13:45:54 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:45:55 - UltimateHumanoid - INFO - [logger.py:99] - Action 'stand' - completed
+2026-01-05 13:45:56 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:45:56 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:45:59 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:45:59 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:02 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:46:02 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:46:02 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:46:02 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:46:04 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:46:05 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:46:06 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'peace_sign', 'confidence': 0.8, 'action': 'raise_right_hand'}
+2026-01-05 13:46:06 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: raise_right_hand
+2026-01-05 13:46:06 - UltimateHumanoid - INFO - [logger.py:99] - Action 'raise_right_hand' - starting
+2026-01-05 13:46:06 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action raise_right_hand started
+2026-01-05 13:46:06 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:46:07 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:07 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:07 - UltimateHumanoid - INFO - [logger.py:99] - Action 'raise_right_hand' - completed
+2026-01-05 13:46:07 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'pointing', 'confidence': 0.8, 'action': 'forward_one_step'}
+2026-01-05 13:46:07 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: forward_one_step
+2026-01-05 13:46:07 - UltimateHumanoid - INFO - [logger.py:99] - Action 'forward_one_step' - starting
+2026-01-05 13:46:07 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action forward_one_step started
+2026-01-05 13:46:08 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.8, 'action': 'stand'}
+2026-01-05 13:46:09 - UltimateHumanoid - INFO - [logger.py:99] - Action 'forward_one_step' - completed
+2026-01-05 13:46:10 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:10 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:13 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:13 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:15 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:46:15 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:46:15 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:46:15 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:46:16 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:16 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:18 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:46:19 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:19 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:22 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:46:22 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:46:22 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:46:22 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:46:22 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'rock_sign', 'confidence': 0.7, 'action': 'wave'}
+2026-01-05 13:46:23 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:46:25 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:46:25 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:46:25 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:46:25 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:46:25 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:46:25 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:46:26 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:26 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:29 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:29 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:29 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:46:30 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'open_palm', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:46:30 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: greet
+2026-01-05 13:46:30 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - starting
+2026-01-05 13:46:30 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action greet started
+2026-01-05 13:46:33 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.8, 'action': 'greet'}
+2026-01-05 13:46:33 - UltimateHumanoid - INFO - [logger.py:99] - Action 'greet' - completed
+2026-01-05 13:46:34 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:46:34 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: stand
+2026-01-05 13:46:34 - UltimateHumanoid - INFO - [logger.py:99] - Action 'stand' - starting
+2026-01-05 13:46:34 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action stand started
+2026-01-05 13:46:35 - UltimateHumanoid - INFO - [logger.py:99] - Action 'stand' - completed
+2026-01-05 13:46:35 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'both_hands_up', 'confidence': 0.9, 'action': 'hands_up'}
+2026-01-05 13:46:35 - UltimateHumanoid - WARNING - [logger.py:87] - Unknown action: hands_up
+2026-01-05 13:46:36 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'pointing', 'confidence': 0.8, 'action': 'forward_one_step'}
+2026-01-05 13:46:36 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: forward_one_step
+2026-01-05 13:46:36 - UltimateHumanoid - INFO - [logger.py:99] - Action 'forward_one_step' - starting
+2026-01-05 13:46:36 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action forward_one_step started
+2026-01-05 13:46:36 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'thumbs_up', 'confidence': 0.7, 'action': 'greet'}
+2026-01-05 13:46:37 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:46:37 - UltimateHumanoid - INFO - [logger.py:99] - Action 'forward_one_step' - completed
+2026-01-05 13:46:37 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'rock_sign', 'confidence': 0.8, 'action': 'wave'}
+2026-01-05 13:46:37 - UltimateHumanoid - INFO - [logger.py:83] - 🎬 EXECUTING: wave
+2026-01-05 13:46:37 - UltimateHumanoid - INFO - [logger.py:99] - Action 'wave' - starting
+2026-01-05 13:46:37 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action wave started
+2026-01-05 13:46:38 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'peace_sign', 'confidence': 0.8, 'action': 'raise_right_hand'}
+2026-01-05 13:46:39 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'pointing', 'confidence': 0.7, 'action': 'forward_one_step'}
+2026-01-05 13:46:40 - UltimateHumanoid - INFO - [logger.py:110] - Trigger detected: gesture - Data: {'gesture': 'fist', 'confidence': 0.7, 'action': 'stand'}
+2026-01-05 13:46:41 - UltimateHumanoid - INFO - [logger.py:99] - Action 'wave' - completed
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - Signal 2 received, shutting down...
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - ======================================================================
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - Shutting down system...
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - Stopping gesture trigger...
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - Camera loop stopped
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - ✓ gesture trigger stopped
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - Action stop requested
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - Action stop requested
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - ActionController cleanup complete
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - ✓ Action controller stopped
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - ======================================================================
+2026-01-05 13:46:43 - UltimateHumanoid - INFO - [logger.py:83] - ✅ Shutdown complete
