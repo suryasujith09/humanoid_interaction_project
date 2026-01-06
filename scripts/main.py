@@ -341,8 +341,8 @@ Examples:
                        help='Control mode: mimic (pose matching) or gesture (hand gestures)')
     parser.add_argument('--no-ros', action='store_true',
                        help='Disable ROS topic control')
-    parser.add_argument('--camera', type=int, default=0,
-                       help='Camera device ID (default: 0)')
+    parser.add_argument('--camera', type=int, default='0',
+                       help='Camera device ID or path (default: 0)')
     
     args = parser.parse_args()
     
