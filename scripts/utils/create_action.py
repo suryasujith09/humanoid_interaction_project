@@ -36,7 +36,14 @@ class ActionRecorder:
     def __init__(self):
         print("🤖 Initializing Action Recorder...")
         try:
-            self.board = Board.Board()
+            # --- FIX: ROBUST CONNECTION ATTEMPT ---
+            try:
+                # Try method A: Module.Class
+                self.board = Board.Board()
+            except AttributeError:
+                # Try method B: Direct Class
+                self.board = Board()
+                
             print("✅ Board Connected")
         except Exception as e:
             print(f"❌ Failed to connect to board: {e}")
