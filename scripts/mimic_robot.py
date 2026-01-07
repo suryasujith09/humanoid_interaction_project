@@ -1,40 +1,32 @@
 #!/usr/bin/env python3
 """
-🔥 Humanoid Mimic System - Integrated Version
-Uses your existing action_controller infrastructure
+🔥 Humanoid Mimic System - WORKING VERSION
+Direct serial control - proven to work!
 """
 import cv2
 import mediapipe as mp
-import sys
+import serial
+import sqlite3
 import time
+import sys
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable
 
-# Add your project to path
-sys.path.insert(0, '/home/ubuntu/humanoid_interaction_project/scripts')
-
-try:
-    from controllers.action_controller import ActionController
-    CONTROLLER_AVAILABLE = True
-    print("✅ ActionController imported successfully")
-except ImportError as e:
-    print(f"⚠️ ActionController not found: {e}")
-    print("📝 Running in DEMO mode (visualization only)")
-    CONTROLLER_AVAILABLE = False
-
 # ===================== CONFIG =====================
 CAMERA_INDEX = 0
+SERIAL_PORT = "/dev/ttyAMA0"
+BAUD_RATE = 1000000
 ACTIONS_DIR = "/home/ubuntu/humanoid_interaction_project/actions"
 COOLDOWN_TIME = 4.0
-MIN_DETECTION_CONFIDENCE = 0.7
-MIN_TRACKING_CONFIDENCE = 0.7
+SERVO_COUNT = 24
+FRAME_TIME = 100
 
 print("=" * 60)
-print("🤖 HUMANOID MIMIC SYSTEM v2.0")
+print("🤖 HUMANOID MIMIC SYSTEM - WORKING VERSION")
 print("=" * 60)
 
-# ===================== MEDIAPIPE SETUP =====================
+# ===================== MEDIAPIPE =====================
 mp_pose = mp.solutions.pose
 mp_draw = mp.solutions.drawing_utils
 
@@ -42,26 +34,24 @@ pose = mp_pose.Pose(
     static_image_mode=False,
     model_complexity=1,
     smooth_landmarks=True,
-    min_detection_confidence=MIN_DETECTION_CONFIDENCE,
-    min_tracking_confidence=MIN_TRACKING_CONFIDENCE,
+    min_detection_confidence=0.7,
+    min_tracking_confidence=0.7,
 )
 
-# ===================== POSE SIGNATURES =====================
+# ===================== POSE DEFINITIONS =====================
 @dataclass
 class PoseSignature:
     name: str
     action_file: str
     check_func: Callable
     description: str
-    color: tuple  # BGR color for UI
+    color: tuple
 
 def check_hands_up(lm):
     """Both hands raised above head"""
     left_wrist = lm[15]
     right_wrist = lm[16]
     nose = lm[0]
-    
-    # Both wrists above nose
     return (left_wrist.y < nose.y - 0.1 and 
             right_wrist.y < nose.y - 0.1)
 
@@ -73,8 +63,6 @@ def check_t_pose(lm):
     right_shoulder = lm[12]
     
     shoulder_y = (left_shoulder.y + right_shoulder.y) / 2
-    
-    # Wrists at shoulder height and arms spread wide
     left_straight = abs(left_wrist.y - shoulder_y) < 0.12
     right_straight = abs(right_wrist.y - shoulder_y) < 0.12
     arms_spread = abs(left_wrist.x - right_wrist.x) > 0.5
@@ -85,8 +73,6 @@ def check_wave(lm):
     """Right hand raised for waving"""
     right_wrist = lm[16]
     right_shoulder = lm[12]
-    
-    # Right wrist above shoulder
     return right_wrist.y < right_shoulder.y - 0.15
 
 def check_hands_down(lm):
@@ -97,8 +83,6 @@ def check_hands_down(lm):
     right_hip = lm[24]
     
     hip_y = (left_hip.y + right_hip.y) / 2
-    
-    # Both hands at or below hip level
     return (left_wrist.y > hip_y - 0.15 and 
             right_wrist.y > hip_y - 0.15)
 
@@ -107,7 +91,6 @@ def check_place_block(lm):
     left_wrist = lm[15]
     right_wrist = lm[16]
     
-    # Both hands reaching forward (negative z = toward camera)
     hands_forward = left_wrist.z < -0.1 and right_wrist.z < -0.1
     hands_close = abs(left_wrist.x - right_wrist.x) < 0.25
     
@@ -120,35 +103,35 @@ POSES = [
         action_file="hands_up.d6a",
         check_func=check_hands_up,
         description="Raise both hands above head",
-        color=(0, 255, 255)  # Yellow
+        color=(0, 255, 255)
     ),
     PoseSignature(
         name="T-POSE",
         action_file="hands_straight.d6a",
         check_func=check_t_pose,
         description="Extend arms horizontally",
-        color=(255, 0, 255)  # Magenta
+        color=(255, 0, 255)
     ),
     PoseSignature(
         name="WAVE",
         action_file="wave.d6a",
         check_func=check_wave,
         description="Raise right hand to wave",
-        color=(255, 165, 0)  # Orange
+        color=(255, 165, 0)
     ),
     PoseSignature(
         name="GREET",
         action_file="greet.d6a",
         check_func=check_hands_down,
         description="Lower hands to greet",
-        color=(0, 255, 0)  # Green
+        color=(0, 255, 0)
     ),
     PoseSignature(
         name="PLACE BLOCK",
         action_file="placeblock.d6a",
         check_func=check_place_block,
         description="Reach forward to place",
-        color=(255, 100, 100)  # Light Blue
+        color=(255, 100, 100)
     ),
 ]
 
@@ -159,113 +142,167 @@ for p in POSES:
     print(f"   {status} {p.name}: {p.description}")
 
 # ===================== ROBOT CONTROLLER =====================
-class RobotMimicController:
-    def __init__(self, actions_dir):
-        self.actions_dir = Path(actions_dir)
+class RobotController:
+    def __init__(self, port, baud):
         self.busy = False
-        self.last_action_time = 0
-        
-        if CONTROLLER_AVAILABLE:
-            try:
-                self.controller = ActionController(str(self.actions_dir))
-                print("\n✅ Robot controller initialized")
-                self.available = True
-            except Exception as e:
-                print(f"\n⚠️ Controller init failed: {e}")
-                self.controller = None
-                self.available = False
-        else:
-            self.controller = None
-            self.available = False
-    
-    def execute_pose(self, pose: PoseSignature):
-        """Execute a pose action on the robot"""
-        if self.busy:
-            return False, "Robot busy"
-        
-        action_path = self.actions_dir / pose.action_file
-        if not action_path.exists():
-            return False, f"Action file not found: {pose.action_file}"
-        
-        print("\n" + "=" * 50)
-        print(f"🎬 EXECUTING: {pose.name}")
-        print(f"📂 File: {pose.action_file}")
-        
-        if not self.available:
-            print("🎭 DEMO MODE - Simulating action")
-            time.sleep(1.5)
-            return True, "Demo mode"
-        
-        self.busy = True
-        success = False
-        message = ""
+        self.serial = None
         
         try:
-            # Use your ActionController to play the action
-            self.controller.play_action(str(action_path))
-            print("✅ Action completed")
-            success = True
-            message = "Success"
+            print(f"\n🔌 Connecting to {port} @ {baud} baud...")
+            self.serial = serial.Serial(
+                port, baud,
+                timeout=0.5,
+                write_timeout=0.5
+            )
+            time.sleep(2)
+            print("✅ Robot connected")
         except Exception as e:
-            print(f"❌ Action failed: {e}")
-            message = str(e)
-        finally:
-            time.sleep(0.3)  # Small delay
-            self.busy = False
-            self.last_action_time = time.time()
+            print(f"⚠️ Serial failed: {e}")
+            print("📝 Running in DEMO mode")
+    
+    def send_frame(self, positions):
+        """Send servo positions for one frame"""
+        if not self.serial:
+            return
         
-        return success, message
+        cmd = ""
+        for i, pos in enumerate(positions):
+            pos = max(500, min(2500, int(pos)))
+            cmd += f"#{i:02d}P{pos:04d}"
+        
+        cmd += f"T{FRAME_TIME}\r\n"
+        
+        try:
+            self.serial.write(cmd.encode('ascii'))
+            self.serial.flush()
+        except Exception as e:
+            print(f"⚠️ Serial write error: {e}")
+    
+    def play_action(self, action_file, pose_name):
+        """Execute an action from .d6a file"""
+        if self.busy:
+            return False
+        
+        path = Path(ACTIONS_DIR) / action_file
+        if not path.exists():
+            print(f"❌ File not found: {action_file}")
+            return False
+        
+        print("\n" + "=" * 50)
+        print(f"🎬 EXECUTING: {pose_name}")
+        print(f"📂 File: {action_file}")
+        
+        try:
+            conn = sqlite3.connect(str(path))
+            cur = conn.cursor()
+            
+            # Get table structure
+            tables = [t[0] for t in cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()]
+            
+            # Find the right table
+            table = None
+            if "ActionGroup" in tables:
+                table = "ActionGroup"
+            elif "frames" in tables:
+                table = "frames"
+            else:
+                table = tables[0] if tables else None
+            
+            if not table:
+                print("⚠️ No valid table found")
+                conn.close()
+                return False
+            
+            # Read frames
+            frames = cur.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
+            conn.close()
+            
+            if not frames:
+                print("⚠️ No frames found")
+                return False
+            
+            print(f"🎬 Playing {len(frames)} frames")
+            
+            if not self.serial:
+                print("🎭 DEMO MODE - simulating")
+                time.sleep(len(frames) * FRAME_TIME / 1000)
+                return True
+            
+            self.busy = True
+            
+            # Determine start column
+            start_col = 1
+            if len(frames[0]) > SERVO_COUNT + 5:
+                start_col = 2
+            
+            # Play each frame
+            for frame in frames:
+                end_col = start_col + SERVO_COUNT
+                positions = frame[start_col:end_col]
+                
+                # Fill missing data
+                if len(positions) < SERVO_COUNT:
+                    positions = list(positions) + [1500] * (SERVO_COUNT - len(positions))
+                
+                self.send_frame(positions[:SERVO_COUNT])
+                time.sleep(FRAME_TIME / 1000)
+            
+            print("✅ Action completed")
+            self.busy = False
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            self.busy = False
+            return False
 
 # ===================== UI DRAWING =====================
 def draw_ui_overlay(frame, detected_pose=None, fps=0, robot_status="Ready"):
-    """Draw beautiful UI overlay"""
+    """Draw UI overlay"""
     h, w = frame.shape[:2]
     
-    # === TOP BAR ===
-    # Background
+    # Top bar
     overlay = frame.copy()
     cv2.rectangle(overlay, (0, 0), (w, 80), (30, 30, 30), -1)
     frame = cv2.addWeighted(frame, 0.7, overlay, 0.3, 0)
     
     # Title
-    cv2.putText(frame, "HUMANOID MIMIC SYSTEM", (20, 35),
-                cv2.FONT_HERSHEY_BOLD, 1.0, (0, 255, 255), 2)
+    cv2.putText(frame, "HUMANOID MIMIC SYSTEM", (20, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
     
     # FPS
-    fps_text = f"FPS: {fps:.1f}"
-    cv2.putText(frame, fps_text, (20, 60),
+    cv2.putText(frame, f"FPS: {fps:.1f}", (20, 65),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
     
     # Status
     status_color = (0, 255, 0) if robot_status == "Ready" else (0, 165, 255)
-    cv2.putText(frame, f"Status: {robot_status}", (w - 250, 35),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
+    cv2.putText(frame, f"Status: {robot_status}", (w - 250, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
     
-    # === CURRENT POSE (if detected) ===
+    # Current pose badge
     if detected_pose:
-        # Find the pose object
         pose_obj = next((p for p in POSES if p.name == detected_pose), None)
         if pose_obj:
-            # Big colored badge
             badge_y = 100
             badge_h = 60
             cv2.rectangle(frame, (10, badge_y), (w - 10, badge_y + badge_h),
                          pose_obj.color, -1)
             cv2.rectangle(frame, (10, badge_y), (w - 10, badge_y + badge_h),
-                         (255, 255, 255), 2)
+                         (255, 255, 255), 3)
             
-            # Text
-            text = f"🎯 DETECTED: {detected_pose}"
-            cv2.putText(frame, text, (20, badge_y + 40),
-                       cv2.FONT_HERSHEY_BOLD, 1.0, (255, 255, 255), 2)
+            cv2.putText(frame, f">>> {detected_pose} <<<", (25, badge_y + 42),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
     
-    # === POSE LIST (side panel) ===
+    # Pose list panel
     panel_x = w - 320
     panel_y = 180
     panel_w = 310
     panel_h = len(POSES) * 50 + 50
     
-    # Panel background
     overlay = frame.copy()
     cv2.rectangle(overlay, (panel_x, panel_y), 
                  (panel_x + panel_w, panel_y + panel_h),
@@ -275,9 +312,9 @@ def draw_ui_overlay(frame, detected_pose=None, fps=0, robot_status="Ready"):
                  (panel_x + panel_w, panel_y + panel_h),
                  (100, 100, 100), 2)
     
-    # Title
+    # Panel title
     cv2.putText(frame, "Available Poses", (panel_x + 10, panel_y + 30),
-                cv2.FONT_HERSHEY_BOLD, 0.6, (200, 200, 200), 2)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
     
     # Pose list
     y_pos = panel_y + 60
@@ -285,7 +322,8 @@ def draw_ui_overlay(frame, detected_pose=None, fps=0, robot_status="Ready"):
         is_active = detected_pose == pose.name
         
         # Color indicator
-        cv2.circle(frame, (panel_x + 15, y_pos - 5), 6, pose.color, -1)
+        cv2.circle(frame, (panel_x + 15, y_pos - 5), 7, pose.color, -1)
+        cv2.circle(frame, (panel_x + 15, y_pos - 5), 7, (255, 255, 255), 1)
         
         # Pose name
         color = (255, 255, 255) if is_active else (180, 180, 180)
@@ -295,32 +333,31 @@ def draw_ui_overlay(frame, detected_pose=None, fps=0, robot_status="Ready"):
         
         y_pos += 50
     
-    # === INSTRUCTIONS ===
+    # Instructions
     cv2.putText(frame, "Press ESC or Q to exit", (10, h - 20),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
     
     return frame
 
 # ===================== INITIALIZE =====================
-print("\n🔧 Initializing components...")
+print("\n🔧 Initializing system...")
 
-robot = RobotMimicController(ACTIONS_DIR)
+robot = RobotController(SERIAL_PORT, BAUD_RATE)
 
 print("🎥 Starting camera...")
 cap = cv2.VideoCapture(CAMERA_INDEX)
 
 if not cap.isOpened():
-    print("❌ Failed to open camera")
+    print("❌ Camera failed")
     sys.exit(1)
 
-# Camera settings
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
 print("✅ Camera ready")
 print("\n" + "=" * 60)
-print("🟢 SYSTEM ACTIVE - Strike a pose to control the robot!")
+print("🟢 SYSTEM ACTIVE - Strike a pose!")
 print("=" * 60)
 
 # ===================== MAIN LOOP =====================
@@ -349,7 +386,7 @@ try:
         if result.pose_landmarks:
             lm = result.pose_landmarks.landmark
             
-            # Check each pose (only if robot is ready)
+            # Check poses (only if robot ready)
             if not robot.busy:
                 for pose_sig in POSES:
                     try:
@@ -360,12 +397,11 @@ try:
                             # Check cooldown
                             last_time = last_trigger.get(pose_sig.name, 0)
                             if now - last_time > COOLDOWN_TIME:
-                                # Execute the action
-                                success, msg = robot.execute_pose(pose_sig)
-                                if success:
+                                # Execute action
+                                if robot.play_action(pose_sig.action_file, pose_sig.name):
                                     last_trigger[pose_sig.name] = now
                             
-                            break  # Only one pose at a time
+                            break
                     except Exception as e:
                         print(f"⚠️ Error checking {pose_sig.name}: {e}")
             
@@ -395,20 +431,19 @@ try:
         
         # Handle keyboard
         key = cv2.waitKey(1) & 0xFF
-        if key == 27 or key == ord('q'):  # ESC or Q
+        if key == 27 or key == ord('q'):
             break
 
 except KeyboardInterrupt:
-    print("\n\n⚠️ Interrupted by user (Ctrl+C)")
+    print("\n\n⚠️ Interrupted by user")
 except Exception as e:
     print(f"\n\n❌ Fatal error: {e}")
     import traceback
     traceback.print_exc()
 finally:
-    # Cleanup
-    print("\n🛑 Shutting down system...")
+    print("\n🛑 Shutting down...")
     cap.release()
     cv2.destroyAllWindows()
-    pose.close()
+    if robot.serial:
+        robot.serial.close()
     print("✅ Shutdown complete")
-    print("\nThank you for using Humanoid Mimic System!")
