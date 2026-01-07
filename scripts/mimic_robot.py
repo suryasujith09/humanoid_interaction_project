@@ -1,29 +1,35 @@
 #!/usr/bin/env python3
 """
-🔥 Humanoid Mimic System - WORKING VERSION
-Direct serial control - proven to work!
+🔥 Humanoid Mimic System - FINAL VERSION
+Uses proper MotionManager API (Hiwonder/AiNex protocol)
 """
 import cv2
 import mediapipe as mp
-import serial
-import sqlite3
 import time
 import sys
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable
 
+# Import the motion manager (Hiwonder/AiNex API)
+try:
+    from ainex_kinematics.motion_manager import MotionManager
+    motion_manager = MotionManager('/home/ubuntu/software/ainex_controller/ActionGroups')
+    MOTION_AVAILABLE = True
+    print("✅ MotionManager imported successfully")
+except ImportError as e:
+    print(f"⚠️ MotionManager import failed: {e}")
+    print("📝 Running in DEMO mode")
+    motion_manager = None
+    MOTION_AVAILABLE = False
+
 # ===================== CONFIG =====================
 CAMERA_INDEX = 0
-SERIAL_PORT = "/dev/ttyAMA0"
-BAUD_RATE = 1000000
 ACTIONS_DIR = "/home/ubuntu/humanoid_interaction_project/actions"
 COOLDOWN_TIME = 4.0
-SERVO_COUNT = 24
-FRAME_TIME = 100
 
 print("=" * 60)
-print("🤖 HUMANOID MIMIC SYSTEM - WORKING VERSION")
+print("🤖 HUMANOID MIMIC SYSTEM - FINAL")
 print("=" * 60)
 
 # ===================== MEDIAPIPE =====================
@@ -42,93 +48,70 @@ pose = mp_pose.Pose(
 @dataclass
 class PoseSignature:
     name: str
-    action_file: str
+    action_name: str  # Name for motion_manager.runAction()
     check_func: Callable
     description: str
     color: tuple
 
 def check_hands_up(lm):
     """Both hands raised above head"""
-    left_wrist = lm[15]
-    right_wrist = lm[16]
-    nose = lm[0]
-    return (left_wrist.y < nose.y - 0.1 and 
-            right_wrist.y < nose.y - 0.1)
+    return lm[15].y < lm[0].y - 0.1 and lm[16].y < lm[0].y - 0.1
 
 def check_t_pose(lm):
     """Arms extended horizontally"""
-    left_wrist = lm[15]
-    right_wrist = lm[16]
-    left_shoulder = lm[11]
-    right_shoulder = lm[12]
-    
-    shoulder_y = (left_shoulder.y + right_shoulder.y) / 2
-    left_straight = abs(left_wrist.y - shoulder_y) < 0.12
-    right_straight = abs(right_wrist.y - shoulder_y) < 0.12
-    arms_spread = abs(left_wrist.x - right_wrist.x) > 0.5
-    
-    return left_straight and right_straight and arms_spread
+    sy = (lm[11].y + lm[12].y) / 2
+    return (abs(lm[15].y - sy) < 0.12 and 
+            abs(lm[16].y - sy) < 0.12 and
+            abs(lm[15].x - lm[16].x) > 0.5)
 
 def check_wave(lm):
     """Right hand raised for waving"""
-    right_wrist = lm[16]
-    right_shoulder = lm[12]
-    return right_wrist.y < right_shoulder.y - 0.15
+    return lm[16].y < lm[12].y - 0.15
 
 def check_hands_down(lm):
-    """Hands down by hips (greeting pose)"""
-    left_wrist = lm[15]
-    right_wrist = lm[16]
-    left_hip = lm[23]
-    right_hip = lm[24]
-    
-    hip_y = (left_hip.y + right_hip.y) / 2
-    return (left_wrist.y > hip_y - 0.15 and 
-            right_wrist.y > hip_y - 0.15)
+    """Hands down by hips"""
+    hy = (lm[23].y + lm[24].y) / 2
+    return lm[15].y > hy - 0.15 and lm[16].y > hy - 0.15
 
 def check_place_block(lm):
     """Hands forward in placing motion"""
-    left_wrist = lm[15]
-    right_wrist = lm[16]
-    
-    hands_forward = left_wrist.z < -0.1 and right_wrist.z < -0.1
-    hands_close = abs(left_wrist.x - right_wrist.x) < 0.25
-    
-    return hands_forward and hands_close
+    return (lm[15].z < -0.1 and lm[16].z < -0.1 and
+            abs(lm[15].x - lm[16].x) < 0.25)
 
 # ===================== POSE REGISTRY =====================
+# Map to action names that MotionManager recognizes
 POSES = [
     PoseSignature(
         name="HANDS UP",
-        action_file="hands_up.d6a",
+        action_name="hands_up",  # This calls motion_manager.runAction('hands_up')
         check_func=check_hands_up,
         description="Raise both hands above head",
         color=(0, 255, 255)
     ),
     PoseSignature(
         name="T-POSE",
-        action_file="hands_straight.d6a",
+        action_name="hands_straight",
         check_func=check_t_pose,
         description="Extend arms horizontally",
         color=(255, 0, 255)
     ),
     PoseSignature(
         name="WAVE",
-        action_file="wave.d6a",
+        action_name="wave",
         check_func=check_wave,
         description="Raise right hand to wave",
         color=(255, 165, 0)
     ),
     PoseSignature(
         name="GREET",
-        action_file="greet.d6a",
+        action_name="greet",
         check_func=check_hands_down,
         description="Lower hands to greet",
         color=(0, 255, 0)
     ),
     PoseSignature(
         name="PLACE BLOCK",
-        action_file="placeblock.d6a",
+        action_name="placeblock",
         check_func=check_place_block,
         description="Reach forward to place",
         color=(255, 100, 100)
@@ -137,132 +120,55 @@ POSES = [
 
 print(f"\n📋 Loaded {len(POSES)} pose signatures:")
 for p in POSES:
-    action_path = Path(ACTIONS_DIR) / p.action_file
-    status = "✅" if action_path.exists() else "❌"
-    print(f"   {status} {p.name}: {p.description}")
+    print(f"   • {p.name} → motion_manager.runAction('{p.action_name}')")
 
 # ===================== ROBOT CONTROLLER =====================
 class RobotController:
-    def __init__(self, port, baud):
+    def __init__(self):
         self.busy = False
-        self.serial = None
+        self.available = MOTION_AVAILABLE
         
-        try:
-            print(f"\n🔌 Connecting to {port} @ {baud} baud...")
-            self.serial = serial.Serial(
-                port, baud,
-                timeout=0.5,
-                write_timeout=0.5
-            )
-            time.sleep(2)
-            print("✅ Robot connected")
-        except Exception as e:
-            print(f"⚠️ Serial failed: {e}")
-            print("📝 Running in DEMO mode")
+        if self.available:
+            print("\n✅ Robot controller ready (MotionManager)")
+        else:
+            print("\n⚠️ Robot controller in DEMO mode")
     
-    def send_frame(self, positions):
-        """Send servo positions for one frame"""
-        if not self.serial:
-            return
-        
-        cmd = ""
-        for i, pos in enumerate(positions):
-            pos = max(500, min(2500, int(pos)))
-            cmd += f"#{i:02d}P{pos:04d}"
-        
-        cmd += f"T{FRAME_TIME}\r\n"
-        
-        try:
-            self.serial.write(cmd.encode('ascii'))
-            self.serial.flush()
-        except Exception as e:
-            print(f"⚠️ Serial write error: {e}")
-    
-    def play_action(self, action_file, pose_name):
-        """Execute an action from .d6a file"""
+    def execute_action(self, action_name, pose_name):
+        """Execute action using MotionManager"""
         if self.busy:
-            return False
-        
-        path = Path(ACTIONS_DIR) / action_file
-        if not path.exists():
-            print(f"❌ File not found: {action_file}")
+            print(f"⏳ Robot busy, skipping {pose_name}")
             return False
         
         print("\n" + "=" * 50)
         print(f"🎬 EXECUTING: {pose_name}")
-        print(f"📂 File: {action_file}")
+        print(f"📞 Calling: motion_manager.runAction('{action_name}')")
+        
+        if not self.available:
+            print("🎭 DEMO MODE - No actual robot motion")
+            time.sleep(1.5)
+            return True
+        
+        self.busy = True
+        success = False
         
         try:
-            conn = sqlite3.connect(str(path))
-            cur = conn.cursor()
-            
-            # Get table structure
-            tables = [t[0] for t in cur.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()]
-            
-            # Find the right table
-            table = None
-            if "ActionGroup" in tables:
-                table = "ActionGroup"
-            elif "frames" in tables:
-                table = "frames"
-            else:
-                table = tables[0] if tables else None
-            
-            if not table:
-                print("⚠️ No valid table found")
-                conn.close()
-                return False
-            
-            # Read frames
-            frames = cur.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
-            conn.close()
-            
-            if not frames:
-                print("⚠️ No frames found")
-                return False
-            
-            print(f"🎬 Playing {len(frames)} frames")
-            
-            if not self.serial:
-                print("🎭 DEMO MODE - simulating")
-                time.sleep(len(frames) * FRAME_TIME / 1000)
-                return True
-            
-            self.busy = True
-            
-            # Determine start column
-            start_col = 1
-            if len(frames[0]) > SERVO_COUNT + 5:
-                start_col = 2
-            
-            # Play each frame
-            for frame in frames:
-                end_col = start_col + SERVO_COUNT
-                positions = frame[start_col:end_col]
-                
-                # Fill missing data
-                if len(positions) < SERVO_COUNT:
-                    positions = list(positions) + [1500] * (SERVO_COUNT - len(positions))
-                
-                self.send_frame(positions[:SERVO_COUNT])
-                time.sleep(FRAME_TIME / 1000)
-            
-            print("✅ Action completed")
-            self.busy = False
-            return True
-            
+            # This is the key call - exactly like in your example!
+            motion_manager.runAction(action_name)
+            print("✅ Action completed successfully")
+            success = True
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Action failed: {e}")
             import traceback
             traceback.print_exc()
+        finally:
+            time.sleep(0.5)
             self.busy = False
-            return False
+        
+        return success
 
 # ===================== UI DRAWING =====================
 def draw_ui_overlay(frame, detected_pose=None, fps=0, robot_status="Ready"):
-    """Draw UI overlay"""
+    """Draw beautiful UI overlay"""
     h, w = frame.shape[:2]
     
     # Top bar
@@ -340,9 +246,9 @@ def draw_ui_overlay(frame, detected_pose=None, fps=0, robot_status="Ready"):
     return frame
 
 # ===================== INITIALIZE =====================
-print("\n🔧 Initializing system...")
+print("\n🔧 Initializing components...")
 
-robot = RobotController(SERIAL_PORT, BAUD_RATE)
+robot = RobotController()
 
 print("🎥 Starting camera...")
 cap = cv2.VideoCapture(CAMERA_INDEX)
@@ -397,11 +303,11 @@ try:
                             # Check cooldown
                             last_time = last_trigger.get(pose_sig.name, 0)
                             if now - last_time > COOLDOWN_TIME:
-                                # Execute action
-                                if robot.play_action(pose_sig.action_file, pose_sig.name):
+                                # Execute action using MotionManager
+                                if robot.execute_action(pose_sig.action_name, pose_sig.name):
                                     last_trigger[pose_sig.name] = now
                             
-                            break
+                            break  # Only one pose at a time
                     except Exception as e:
                         print(f"⚠️ Error checking {pose_sig.name}: {e}")
             
@@ -431,7 +337,7 @@ try:
         
         # Handle keyboard
         key = cv2.waitKey(1) & 0xFF
-        if key == 27 or key == ord('q'):
+        if key == 27 or key == ord('q'):  # ESC or Q
             break
 
 except KeyboardInterrupt:
@@ -444,6 +350,6 @@ finally:
     print("\n🛑 Shutting down...")
     cap.release()
     cv2.destroyAllWindows()
-    if robot.serial:
-        robot.serial.close()
+    pose.close()
     print("✅ Shutdown complete")
+    print("\nThank you for using Humanoid Mimic System!")
