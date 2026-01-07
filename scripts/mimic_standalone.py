@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-🔥 STANDALONE Humanoid Mimic System
+🔥 STANDALONE Humanoid Mimic System - FIXED
 Directly reads .d6a files and controls servos via serial
-No dependencies on motion_manager or ROS
 """
 import cv2
 import mediapipe as mp
@@ -23,7 +22,7 @@ SERVO_COUNT = 24
 FRAME_TIME = 100  # milliseconds per frame
 
 print("=" * 60)
-print("🤖 STANDALONE MIMIC SYSTEM")
+print("🤖 STANDALONE MIMIC SYSTEM v1.1")
 print("=" * 60)
 
 # ===================== MEDIAPIPE =====================
@@ -134,23 +133,31 @@ class ServoController:
             conn = sqlite3.connect(str(path))
             cur = conn.cursor()
             
-            # Detect table structure
+            # Get table structure
             tables = [t[0] for t in cur.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()]
+            
+            print(f"🔍 Tables found: {tables}")
             
             # Try common table names
             table = None
             if "ActionGroup" in tables:
                 table = "ActionGroup"
-                start_col = 2
             elif "frames" in tables:
                 table = "frames"
-                start_col = 1
             else:
-                print(f"⚠️ Unknown table structure: {tables}")
+                # Use first table
+                table = tables[0] if tables else None
+            
+            if not table:
+                print("⚠️ No valid table found")
                 conn.close()
                 return False
+            
+            # Get column info
+            columns = [col[1] for col in cur.execute(f"PRAGMA table_info({table})").fetchall()]
+            print(f"📊 Columns: {len(columns)} total")
             
             # Read all frames
             frames = cur.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
@@ -160,7 +167,8 @@ class ServoController:
                 print("⚠️ No frames found")
                 return False
             
-            print(f"🎬 Playing {len(frames)} frames...")
+            print(f"🎬 Playing {len(frames)} frames")
+            print(f"📏 First frame has {len(frames[0])} columns")
             
             if not self.serial:
                 print("🎭 DEMO MODE - simulating action")
@@ -169,23 +177,41 @@ class ServoController:
             
             self.busy = True
             
+            # Determine start column (skip ID columns)
+            # Most .d6a files have: [id, ...servo data...]
+            # or [id, time, ...servo data...]
+            start_col = 1  # Skip first ID column
+            
+            # If we have way more columns than expected, skip 2
+            if len(frames[0]) > SERVO_COUNT + 5:
+                start_col = 2
+            
+            print(f"📍 Reading servo data from column {start_col} onwards")
+            
             # Play each frame
+            played = 0
             for i, frame in enumerate(frames):
-                positions = frame[start_col:start_col + SERVO_COUNT]
+                # Extract servo positions
+                end_col = start_col + SERVO_COUNT
+                positions = frame[start_col:end_col]
                 
+                # Validate we have enough data
                 if len(positions) < SERVO_COUNT:
-                    print(f"⚠️ Frame {i}: insufficient data")
-                    continue
+                    # Try to fill missing servos with default position
+                    positions = list(positions) + [1500] * (SERVO_COUNT - len(positions))
                 
-                self.send_frame(positions)
+                self.send_frame(positions[:SERVO_COUNT])
+                played += 1
                 time.sleep(FRAME_TIME / 1000)
             
-            print("✅ Action complete")
+            print(f"✅ Played {played} frames successfully")
             self.busy = False
             return True
             
         except Exception as e:
             print(f"❌ Error playing action: {e}")
+            import traceback
+            traceback.print_exc()
             self.busy = False
             return False
 
@@ -198,46 +224,58 @@ def draw_ui(frame, detected=None, fps=0, status="Ready"):
     cv2.rectangle(overlay, (0, 0), (w, 70), (30, 30, 30), -1)
     frame = cv2.addWeighted(frame, 0.7, overlay, 0.3, 0)
     
-    cv2.putText(frame, "HUMANOID MIMIC", (20, 35),
-                cv2.FONT_HERSHEY_BOLD, 1.0, (0, 255, 255), 2)
-    cv2.putText(frame, f"FPS: {fps:.1f}", (20, 55),
+    # Title (using SIMPLEX which is always available)
+    cv2.putText(frame, "HUMANOID MIMIC", (20, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
+    cv2.putText(frame, f"FPS: {fps:.1f}", (20, 60),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    cv2.putText(frame, status, (w - 150, 35),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, 
-                (0, 255, 0) if status == "Ready" else (0, 165, 255), 2)
+    
+    # Status indicator
+    status_color = (0, 255, 0) if status == "Ready" else (0, 165, 255)
+    cv2.putText(frame, status, (w - 150, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, status_color, 2)
     
     # Detected pose banner
     if detected:
         pose_obj = next((p for p in POSES if p.name == detected), None)
         if pose_obj:
             cv2.rectangle(frame, (10, 90), (w - 10, 140), pose_obj.color, -1)
-            cv2.rectangle(frame, (10, 90), (w - 10, 140), (255, 255, 255), 2)
-            cv2.putText(frame, f"DETECTED: {detected}", (20, 125),
-                       cv2.FONT_HERSHEY_BOLD, 1.0, (255, 255, 255), 2)
+            cv2.rectangle(frame, (10, 90), (w - 10, 140), (255, 255, 255), 3)
+            cv2.putText(frame, f">>> {detected} <<<", (25, 123),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
     
-    # Pose list
+    # Pose list panel
     panel_x = w - 250
     panel_y = 160
+    panel_h = len(POSES) * 40 + 50
     
     overlay = frame.copy()
-    cv2.rectangle(overlay, (panel_x, panel_y), (w - 10, panel_y + len(POSES) * 40 + 40),
+    cv2.rectangle(overlay, (panel_x, panel_y), (w - 10, panel_y + panel_h),
                  (20, 20, 20), -1)
     frame = cv2.addWeighted(frame, 0.8, overlay, 0.2, 0)
+    cv2.rectangle(frame, (panel_x, panel_y), (w - 10, panel_y + panel_h),
+                 (100, 100, 100), 2)
     
-    cv2.putText(frame, "Poses:", (panel_x + 10, panel_y + 25),
-                cv2.FONT_HERSHEY_BOLD, 0.6, (200, 200, 200), 1)
+    cv2.putText(frame, "Available Poses:", (panel_x + 10, panel_y + 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 2)
     
-    y = panel_y + 50
+    y = panel_y + 55
     for p in POSES:
         active = detected == p.name
-        cv2.circle(frame, (panel_x + 15, y - 5), 5, p.color, -1)
+        
+        # Color dot
+        cv2.circle(frame, (panel_x + 15, y - 5), 6, p.color, -1)
+        cv2.circle(frame, (panel_x + 15, y - 5), 6, (255, 255, 255), 1)
+        
+        # Pose name
+        text_color = (255, 255, 255) if active else (180, 180, 180)
+        thickness = 2 if active else 1
         cv2.putText(frame, p.name, (panel_x + 30, y),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                   (255, 255, 255) if active else (180, 180, 180),
-                   2 if active else 1)
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, thickness)
         y += 40
     
-    cv2.putText(frame, "ESC/Q to exit", (10, h - 15),
+    # Instructions
+    cv2.putText(frame, "Press ESC or Q to exit", (10, h - 15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
     
     return frame
@@ -256,7 +294,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 print("✅ Camera ready")
 print("\n" + "=" * 60)
-print("🟢 SYSTEM ACTIVE")
+print("🟢 SYSTEM ACTIVE - Strike a pose!")
 print("=" * 60)
 
 # ===================== MAIN LOOP =====================
@@ -270,7 +308,10 @@ try:
         if not ret:
             break
         
+        # Mirror for natural interaction
         frame = cv2.flip(frame, 1)
+        
+        # Process pose
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         result = pose.process(rgb)
         
@@ -280,36 +321,53 @@ try:
         if result.pose_landmarks and not controller.busy:
             lm = result.pose_landmarks.landmark
             
+            # Check each pose
             for p in POSES:
-                if p.check_func(lm):
-                    detected = p.name
-                    now = time.time()
-                    
-                    if now - last_trigger.get(p.name, 0) > COOLDOWN_TIME:
-                        action_path = Path(ACTIONS_DIR) / p.file
-                        if controller.play_d6a_file(action_path):
-                            last_trigger[p.name] = now
-                    break
+                try:
+                    if p.check_func(lm):
+                        detected = p.name
+                        now = time.time()
+                        
+                        # Check cooldown
+                        if now - last_trigger.get(p.name, 0) > COOLDOWN_TIME:
+                            action_path = Path(ACTIONS_DIR) / p.file
+                            if controller.play_d6a_file(action_path):
+                                last_trigger[p.name] = now
+                        break
+                except Exception as e:
+                    print(f"⚠️ Pose check error: {e}")
             
+            # Draw skeleton
             mp_draw.draw_landmarks(
                 frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-                mp_draw.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=3),
-                mp_draw.DrawingSpec(color=(0, 255, 255), thickness=2)
+                landmark_drawing_spec=mp_draw.DrawingSpec(
+                    color=(0, 255, 0), thickness=2, circle_radius=3
+                ),
+                connection_drawing_spec=mp_draw.DrawingSpec(
+                    color=(0, 255, 255), thickness=2
+                )
             )
         
+        # Calculate FPS
         frame_count += 1
-        fps = frame_count / (time.time() - start_time)
+        elapsed = time.time() - start_time
+        fps = frame_count / elapsed if elapsed > 0 else 0
         
+        # Draw UI
         frame = draw_ui(frame, detected, fps, status)
+        
+        # Display
         cv2.imshow("Humanoid Mimic", frame)
         
-        if cv2.waitKey(1) & 0xFF in [27, ord('q')]:
+        # Exit keys
+        key = cv2.waitKey(1) & 0xFF
+        if key == 27 or key == ord('q'):
             break
 
 except KeyboardInterrupt:
-    print("\n⚠️ Stopped by user")
+    print("\n\n⚠️ Stopped by user")
 except Exception as e:
-    print(f"\n❌ Error: {e}")
+    print(f"\n\n❌ Fatal error: {e}")
     import traceback
     traceback.print_exc()
 finally:
@@ -318,4 +376,4 @@ finally:
     cv2.destroyAllWindows()
     if controller.serial:
         controller.serial.close()
-    print("✅ Done")
+    print("✅ Goodbye!")
