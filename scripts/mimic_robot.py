@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable
+from ainex_kinematics.motion_manager import MotionManager
 
 # Import the motion manager (Hiwonder/AiNex API)
 try:
@@ -353,3 +354,4 @@ finally:
     pose.close()
     print("✅ Shutdown complete")
     print("\nThank you for using Humanoid Mimic System!")
+
